@@ -15,6 +15,23 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
     <script src="graph-js-sdk-web.js"></script>
     <script src="outlook-demo.js"></script>
+
+    <link rel='stylesheet' href='/node_modules/fullcalendar/dist/fullcalendar.css' />
+    <script src='/node_modules/jquery/dist/jquery.min.js'></script>
+    <script src='/node_modules/moment/min/moment.min.js'></script>
+    <script src='/node_modules/fullcalendar/dist/fullcalendar.js'></script>
+
+    <script>
+        $(function() {
+
+        // page is now ready, initialize the calendar...
+      
+        $('#calendar').fullCalendar({
+          // put your options and callbacks here
+        })
+      
+      });
+    </script>
 </head>
 
 <body>
@@ -34,7 +51,8 @@
                 <ul class="nav navbar-nav authed-nav">
                     <li id='home-nav'><a href="#">Home</a></li>
                     <li id='inbox-nav'><a href="#inbox">Inbox</a></li>
-                    <li id='calendar-nav'><a href="#calendar">Calendar</a></li>
+                    <li id='calendar-nav'><a href="#spacalendar">Calendar</a></li>
+                    <li id='fullcalendar-nav'><a href="#fullcalendar">Full Calendar</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right authed-nav">
                     <li><a href="#signout">Sign out</a></li>
@@ -90,7 +108,7 @@
         </div>
 
         <!-- calendar display -->
-        <div id="calendar" class="page panel panel-default">
+        <div id="spacalendar" class="page panel panel-default">
             <div class="panel-heading">
                 <h1 class="panel-title">Calendar</h1>
             </div>
@@ -100,18 +118,27 @@
             </div>
         </div>
 
-        <!-- token display
-    <div id="token-display" class="page panel panel-default">
-        <div class="panel-body">
-          <h4>Access Token:</h4>
-          <pre><code id="token"></code></pre>
-          <h4>Expires:</h4>
-          <p id="expires-display"></p>
-          <h4>ID Token:</h4>
-          <pre><code id="id-token"></code></pre>
+        <!-- full Calendar -->
+
+        <!-- calendar display -->
+        <div id="fullcalendar" class="page panel panel-default">
+            <h1>Hello World!</h1>
+            <div id='calendar'></div>
         </div>
-      </div>
-  </div> -->
+
+
+        <!-- token display
+        <div id="token-display" class="page panel panel-default">
+            <div class="panel-body">
+            <h4>Access Token:</h4>
+            <pre><code id="token"></code></pre>
+            <h4>Expires:</h4>
+            <p id="expires-display"></p>
+            <h4>ID Token:</h4>
+            <pre><code id="id-token"></code></pre>
+            </div>
+        </div>
+    </div> -->
 
         <!-- Handlebars template for message list -->
     <script id="msg-list-template" type="text/x-handlebars-template">

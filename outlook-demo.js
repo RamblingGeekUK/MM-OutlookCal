@@ -86,9 +86,18 @@ $(function () {
 
             // Display calendar 
 
-            '#calendar': function () {
+            '#spacalendar': function () {
                 if (isAuthenticated) {
                     renderCalendar();
+                } else {
+                    // Redirect to home page
+                    window.location.hash = '#';
+                }
+            },
+
+            '#fullcalendar': function () {
+                if (isAuthenticated) {
+                    renderFullCalendar();
                 } else {
                     // Redirect to home page
                     window.location.hash = '#';
@@ -186,7 +195,7 @@ $(function () {
         setActiveNav('#calendar-nav');
         $('#calendar-status').text('Loading...');
         $('#event-list').empty();
-        $('#calendar').show();
+        $('#spacalendar').show();
 
         getUserEvents(function (events, error) {
             if (error) {
@@ -201,6 +210,18 @@ $(function () {
             }
         });
     }
+
+    function renderFullCalendar() {
+        setActiveNav('#fullcalendar-nav');
+        $('#calendar-status').text('Loading...');
+        $('#event-list').empty();
+        $('#fullcalendar').show();
+
+        // page is now ready, initialize the calendar...
+
+      
+    }
+
 
     function getUserEvents(callback) {
         getAccessToken(function (accessToken) {
