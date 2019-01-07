@@ -21,17 +21,7 @@
     <script src='/node_modules/moment/min/moment.min.js'></script>
     <script src='/node_modules/fullcalendar/dist/fullcalendar.js'></script>
 
-    <script>
-        $(function() {
-
-        // page is now ready, initialize the calendar...
-      
-        $('#calendar').fullCalendar({
-          // put your options and callbacks here
-        })
-      
-      });
-    </script>
+    
 </head>
 
 <body>
@@ -96,7 +86,7 @@
             </div>
         </div>
 
-        <!-- inbox display -->
+        <!-- pretty inbox display         -->
         <div id="inbox" class="page panel panel-default">
             <div class="panel-heading">
                 <h1 class="panel-title">Inbox</h1>
@@ -122,7 +112,6 @@
 
         <!-- calendar display -->
         <div id="fullcalendar" class="page panel panel-default">
-            <h1>Hello World!</h1>
             <div id='calendar'></div>
         </div>
 
@@ -140,7 +129,7 @@
         </div>
     </div> -->
 
-        <!-- Handlebars template for message list -->
+    <!-- Handlebars template for message list -->
     <script id="msg-list-template" type="text/x-handlebars-template">
         {{#each messages}}
         <div class="list-group-item">
@@ -151,18 +140,19 @@
         </div>
         {{/each}}
     </script>
+    
 
     <!-- Handlebars template for event list -->
     <script id="event-list-template" type="text/x-handlebars-template">
     {{#each events}}
     <div class="list-group-item">
-    <h4 id="event-subject" class="list-group-item-heading">{{this.subject}}</h4>
-    <p id="event-start" class="list-group-item-heading">Start: {{formatDate this.start.dateTime}}</p>
-    <p id="event-end" class="list-group-item-heading">End: {{formatDate this.end.dateTime}}</p>
+        <h4 id="event-subject" class="list-group-item-heading">{{this.subject}}</h4>
+        <p id="event-start" class="list-group-item-heading">Start: {{formatDate this.start.dateTime}}</p>
+        <p id="event-end" class="list-group-item-heading">End: {{formatDate this.end.dateTime}}</p>
     </div>
     {{/each}}
     </script>
-
+    
 </body>
 
 </html>

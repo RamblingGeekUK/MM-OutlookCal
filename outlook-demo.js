@@ -215,11 +215,29 @@ $(function () {
         setActiveNav('#fullcalendar-nav');
         $('#calendar-status').text('Loading...');
         $('#event-list').empty();
-        $('#fullcalendar').show();
+        $('#fullcalendar').show();  
+     
+        var fullcalevents;
 
-        // page is now ready, initialize the calendar...
+        getUserEvents(function (events, error) 
+        {
+            if (error) {
+                renderError('getUserEvents failed', error);
+            } else {
+                $('#calendar-status').text('Here are the 10 most recently created events on your calendar.');
+            
+                var eventList = events;
+                //console.log(events);
 
-      
+                var fullcalevents = events.map(outlookevent => ({ start: outlookevent.start.dateTime, end: outlookevent.end.dateTime, title: outlookevent.subject, rec }));
+                console.log(fullcalevents.length);
+            
+                $('#calendar').fullCalendar({
+                    events: fullcalevents            
+                })
+            }
+
+        });
     }
 
 
@@ -234,16 +252,17 @@ $(function () {
                     }
                 });
 
-                // Get the 10 newest events
+                // Get events
                 client
                     .api('/me/events')
-                    .top(10)
+                    .top(100)
                     .select('subject,start,end,createdDateTime')
                     .orderby('createdDateTime DESC')
                     .get((err, res) => {
                         if (err) {
                             callback(null, err);
                         } else {
+                            console.log(res.value);
                             callback(res.value);
                         }
                     });

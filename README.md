@@ -3,7 +3,8 @@
 * https://docs.microsoft.com/en-us/outlook/rest/javascript-tutorial#designing-the-app
 
 * https://fullcalendar.io/scheduler
-https://fullcalendar.io/releases/fullcalendar/3.9.0/demos/basic-views.html
+
+* https://fullcalendar.io/releases/fullcalendar/3.9.0/demos/basic-views.html
 
 * https://codepen.io/KennySing/pen/rBDlJ
 
