@@ -11,6 +11,9 @@
   "license": "ISC",
   "dependencies": {
     "@microsoft/microsoft-graph-client": "^1.3.0",
-    "fullcalendar": "^3.9.0"
+    "fullcalendar": "^4.0.0-alpha.3"
+  },
+  "devDependencies": {
+    "webpack": "^4.28.4"
   }
 }

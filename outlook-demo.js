@@ -1,5 +1,5 @@
 $(function () {
-
+  
     // App configuration
     var authEndpoint = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?';
     var redirectUri = 'http://localhost:8080';
@@ -217,7 +217,7 @@ $(function () {
         $('#event-list').empty();
         $('#fullcalendar').show();  
      
-        var fullcalevents;
+        // var fullcalevents;
 
         getUserEvents(function (events, error) 
         {
@@ -226,15 +226,79 @@ $(function () {
             } else {
                 $('#calendar-status').text('Here are the 10 most recently created events on your calendar.');
             
-                var eventList = events;
-                //console.log(events);
+                // var eventList = events;
+                // console.log(events);
 
-                var fullcalevents = events.map(outlookevent => ({ start: outlookevent.start.dateTime, end: outlookevent.end.dateTime, title: outlookevent.subject, rec }));
-                console.log(fullcalevents.length);
-            
-                $('#calendar').fullCalendar({
-                    events: fullcalevents            
-                })
+                //var fullcalevents = events.map(outlookevent => ({ start: outlookevent.start.dateTime, end: outlookevent.end.dateTime, title: outlookevent.subject }));
+                
+                document.addEventListener('DOMContentLoaded', function() {
+                    var calendarEl = document.getElementById('calendar');
+                
+                    var calendar = new FullCalendar.Calendar(calendarEl, {
+                      defaultDate: '2018-12-12',
+                      editable: true,
+                      eventLimit: true, // allow "more" link when too many events
+                      events: [
+                        {
+                          title: 'All Day Event',
+                          start: '2018-12-01'
+                        },
+                        {
+                          title: 'Long Event',
+                          start: '2018-12-07',
+                          end: '2018-12-10'
+                        },
+                        {
+                          groupId: 999,
+                          title: 'Repeating Event',
+                          start: '2018-12-09T16:00:00'
+                        },
+                        {
+                          groupId: 999,
+                          title: 'Repeating Event',
+                          start: '2018-12-16T16:00:00'
+                        },
+                        {
+                          title: 'Conference',
+                          start: '2018-12-11',
+                          end: '2018-12-13'
+                        },
+                        {
+                          title: 'Meeting',
+                          start: '2018-12-12T10:30:00',
+                          end: '2018-12-12T12:30:00'
+                        },
+                        {
+                          title: 'Lunch',
+                          start: '2018-12-12T12:00:00'
+                        },
+                        {
+                          title: 'Meeting',
+                          start: '2018-12-12T14:30:00'
+                        },
+                        {
+                          title: 'Happy Hour',
+                          start: '2018-12-12T17:30:00'
+                        },
+                        {
+                          title: 'Dinner',
+                          start: '2018-12-12T20:00:00'
+                        },
+                        {
+                          title: 'Birthday Party',
+                          start: '2018-12-13T07:00:00'
+                        },
+                        {
+                          title: 'Click for Google',
+                          url: 'http://google.com/',
+                          start: '2018-12-28'
+                        }
+                      ]
+                    });
+                
+                    calendar.render();
+                  });
+               
             }
 
         });
@@ -255,14 +319,14 @@ $(function () {
                 // Get events
                 client
                     .api('/me/events')
-                    .top(100)
+                    .top(10)
                     .select('subject,start,end,createdDateTime')
                     .orderby('createdDateTime DESC')
                     .get((err, res) => {
                         if (err) {
                             callback(null, err);
                         } else {
-                            console.log(res.value);
+                           // console.log(res.value);
                             callback(res.value);
                         }
                     });
