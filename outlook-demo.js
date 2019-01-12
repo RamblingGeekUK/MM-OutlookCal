@@ -1,12 +1,15 @@
 $(function () {
-  
     // App configuration
     var authEndpoint = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?';
     var redirectUri = 'http://localhost:8080';
     var appId = '33700141-4ed6-4d9f-9c7a-00c5264fe1c3';
     var scopes = 'openid profile User.Read Mail.Read Calendars.Read';
 
-
+    
+   
+    
+    
+    
     // Check for browser support for sessionStorage
     if (typeof (Storage) === 'undefined') {
         render('#unsupportedbrowser');
@@ -27,6 +30,8 @@ $(function () {
     });
 
     function render(hash) {
+
+     
 
         var action = hash.split('=')[0];
 
@@ -216,93 +221,30 @@ $(function () {
         $('#calendar-status').text('Loading...');
         $('#event-list').empty();
         $('#fullcalendar').show();  
-     
-        // var fullcalevents;
-
+        
         getUserEvents(function (events, error) 
         {
+           
+
             if (error) {
                 renderError('getUserEvents failed', error);
             } else {
                 $('#calendar-status').text('Here are the 10 most recently created events on your calendar.');
-            
-                // var eventList = events;
-                // console.log(events);
+                console.log(events);
+                var fullcalevents = events.map(outlookevent => ({ start: outlookevent.start.dateTime, end: outlookevent.end.dateTime, title: outlookevent.subject }));
+                console.log(fullcalevents);
+                
+                var calendarEl = document.getElementById('calendar');
+                var calendar = new FullCalendar.Calendar(calendarEl, {events: fullcalevents});
 
-                //var fullcalevents = events.map(outlookevent => ({ start: outlookevent.start.dateTime, end: outlookevent.end.dateTime, title: outlookevent.subject }));
-                
-                document.addEventListener('DOMContentLoaded', function() {
-                    var calendarEl = document.getElementById('calendar');
-                
-                    var calendar = new FullCalendar.Calendar(calendarEl, {
-                      defaultDate: '2018-12-12',
-                      editable: true,
-                      eventLimit: true, // allow "more" link when too many events
-                      events: [
-                        {
-                          title: 'All Day Event',
-                          start: '2018-12-01'
-                        },
-                        {
-                          title: 'Long Event',
-                          start: '2018-12-07',
-                          end: '2018-12-10'
-                        },
-                        {
-                          groupId: 999,
-                          title: 'Repeating Event',
-                          start: '2018-12-09T16:00:00'
-                        },
-                        {
-                          groupId: 999,
-                          title: 'Repeating Event',
-                          start: '2018-12-16T16:00:00'
-                        },
-                        {
-                          title: 'Conference',
-                          start: '2018-12-11',
-                          end: '2018-12-13'
-                        },
-                        {
-                          title: 'Meeting',
-                          start: '2018-12-12T10:30:00',
-                          end: '2018-12-12T12:30:00'
-                        },
-                        {
-                          title: 'Lunch',
-                          start: '2018-12-12T12:00:00'
-                        },
-                        {
-                          title: 'Meeting',
-                          start: '2018-12-12T14:30:00'
-                        },
-                        {
-                          title: 'Happy Hour',
-                          start: '2018-12-12T17:30:00'
-                        },
-                        {
-                          title: 'Dinner',
-                          start: '2018-12-12T20:00:00'
-                        },
-                        {
-                          title: 'Birthday Party',
-                          start: '2018-12-13T07:00:00'
-                        },
-                        {
-                          title: 'Click for Google',
-                          url: 'http://google.com/',
-                          start: '2018-12-28'
-                        }
-                      ]
-                    });
-                
-                    calendar.render();
-                  });
-               
             }
-
+            calendar.render();
         });
-    }
+
+        
+    };
+
+ 
 
 
     function getUserEvents(callback) {
@@ -319,7 +261,7 @@ $(function () {
                 // Get events
                 client
                     .api('/me/events')
-                    .top(10)
+                    .top(31)
                     .select('subject,start,end,createdDateTime')
                     .orderby('createdDateTime DESC')
                     .get((err, res) => {
