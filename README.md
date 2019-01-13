@@ -9,6 +9,4 @@ https://fullcalendar.io/releases/fullcalendar/3.9.0/demos/basic-views.html
 
 * https://docs.microsoft.com/en-us/graph/outlook-calendar-concept-overview
 
-* https://docs.microsoft.com/en-us/outlook/rest/javascript-tutorial#designing-the-app
-
 * https://www.digitalocean.com/community/tutorials/an-introduction-to-oauth-2
