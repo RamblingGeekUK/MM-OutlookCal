@@ -1,3 +1,5 @@
+
+
 $(function () {
     // App configuration
     var authEndpoint = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?';
@@ -5,10 +7,6 @@ $(function () {
     var appId = '33700141-4ed6-4d9f-9c7a-00c5264fe1c3';
     var scopes = 'openid profile User.Read Mail.Read Calendars.Read';
 
-    
-   
-    
-    
     
     // Check for browser support for sessionStorage
     if (typeof (Storage) === 'undefined') {
@@ -228,8 +226,18 @@ $(function () {
                 renderError('getUserEvents failed', error);
             } else {
                 $('#calendar-status').text('Here are the 10 most recently created events on your calendar.');
+                
                 console.log(events);
-                var fullcalevents = events.map(outlookevent => ({ start: outlookevent.start.dateTime, end: outlookevent.end.dateTime, title: outlookevent.subject, recurrence: outlookevent.recurrence && outlookevent.recurrence.pattern }));
+
+                var fullcalevents = events.map(outlookevent => ({
+                    start: outlookevent.start.dateTime,
+                    end: outlookevent.end.dateTime,
+                    title: outlookevent.subject,    
+                    
+                    rrule: outlookevent.recurrence && {freq: outlookevent.recurrence.pattern.type}
+                
+                }));
+
                 console.log(fullcalevents);
                 
                 var calendarEl = document.getElementById('calendar');
@@ -240,37 +248,6 @@ $(function () {
             getUsersCalendars();
         });
     };
-
-    function getUsersCalendars()
-    {
-        getAccessToken(function (accessToken) {
-            if (accessToken) {
-                // Create a Graph client
-                var client = MicrosoftGraph.Client.init({
-                    authProvider: (done) => {
-                        // Just return the token
-                        done(null, accessToken);
-                    } 
-                });
-
-                // Get 
-                client
-                .api('/me/calendars')
-                .get((err, res) => {
-                    if (err) {
-                        callback(null, err);
-                    } else {
-                        console.log(res.value);
-                        callback(res.value);
-                    }
-                });
-                } else {
-                var error = { responseText: 'Could not retrieve access token' };
-                callback(null, error);
-                }
-            });
-
-    }
 
     function getUserEvents(callback) {
         getAccessToken(function (accessToken) {
@@ -302,6 +279,38 @@ $(function () {
                 callback(null, error);
             }
         });
+    }
+
+    
+    function getUsersCalendars()
+    {
+        getAccessToken(function (accessToken) {
+            if (accessToken) {
+                // Create a Graph client
+                var client = MicrosoftGraph.Client.init({
+                    authProvider: (done) => {
+                        // Just return the token
+                        done(null, accessToken);
+                    } 
+                });
+
+                // Get 
+                client
+                .api('/me/calendars')
+                .get((err, res) => {
+                    if (err) {
+                        callback(null, err);
+                    } else {
+                        console.log(res.value);
+                        callback(res.value);
+                    }
+                });
+                } else {
+                var error = { responseText: 'Could not retrieve access token' };
+                callback(null, error);
+                }
+            });
+
     }
 
     // OAUTH FUNCTIONS =============================
