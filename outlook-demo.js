@@ -224,14 +224,12 @@ $(function () {
         
         getUserEvents(function (events, error) 
         {
-           
-
             if (error) {
                 renderError('getUserEvents failed', error);
             } else {
                 $('#calendar-status').text('Here are the 10 most recently created events on your calendar.');
                 console.log(events);
-                var fullcalevents = events.map(outlookevent => ({ start: outlookevent.start.dateTime, end: outlookevent.end.dateTime, title: outlookevent.subject }));
+                var fullcalevents = events.map(outlookevent => ({ start: outlookevent.start.dateTime, end: outlookevent.end.dateTime, title: outlookevent.subject, recurrence: outlookevent.recurrence && outlookevent.recurrence.pattern }));
                 console.log(fullcalevents);
                 
                 var calendarEl = document.getElementById('calendar');
@@ -239,13 +237,40 @@ $(function () {
 
             }
             calendar.render();
+            getUsersCalendars();
         });
-
-        
     };
 
- 
+    function getUsersCalendars()
+    {
+        getAccessToken(function (accessToken) {
+            if (accessToken) {
+                // Create a Graph client
+                var client = MicrosoftGraph.Client.init({
+                    authProvider: (done) => {
+                        // Just return the token
+                        done(null, accessToken);
+                    } 
+                });
 
+                // Get 
+                client
+                .api('/me/calendars')
+                .get((err, res) => {
+                    if (err) {
+                        callback(null, err);
+                    } else {
+                        console.log(res.value);
+                        callback(res.value);
+                    }
+                });
+                } else {
+                var error = { responseText: 'Could not retrieve access token' };
+                callback(null, error);
+                }
+            });
+
+    }
 
     function getUserEvents(callback) {
         getAccessToken(function (accessToken) {
@@ -260,9 +285,9 @@ $(function () {
 
                 // Get events
                 client
-                    .api('/me/events')
-                    .top(31)
-                    .select('subject,start,end,createdDateTime')
+                    .api('/me/calendars/AQMkADAwATMzAGZmAS04MDMxLTIxNDEtMDACLTAwCgBGAAAD1ScTwXRW7EWwj5lpoJewnwcA5RvNX_Jb8E_EFu2ZRtzozAAAAgEGAAAA5RvNX_Jb8E_EFu2ZRtzozAAAAFehBe0AAAA=/events')
+                    .top(10)
+                    .select('subject,start,end,createdDateTime,recurrence')
                     .orderby('createdDateTime DESC')
                     .get((err, res) => {
                         if (err) {
