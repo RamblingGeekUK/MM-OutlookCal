@@ -1,5 +1,4 @@
 
-
 $(function () {
     // App configuration
     var authEndpoint = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?';
@@ -234,7 +233,13 @@ $(function () {
                     end: outlookevent.end.dateTime,
                     title: outlookevent.subject,    
                     
-                    rrule: outlookevent.recurrence && {freq: outlookevent.recurrence.pattern.type}
+                    rrule: outlookevent.recurrence && {
+                        freq: outlookevent.recurrence.pattern.type,
+                        interval: outlookevent.recurrence.pattern.interval,
+                        byweekday: outlookevent.recurrence.pattern.daysOfWeek,
+                        dtstart: outlookevent.recurrence.range.startDate,
+                        until: outlookevent.recurrence.range.endDate
+                    }
                 
                 }));
 
@@ -245,7 +250,7 @@ $(function () {
 
             }
             calendar.render();
-            getUsersCalendars();
+            
         });
     };
 
@@ -263,7 +268,7 @@ $(function () {
                 // Get events
                 client
                     .api('/me/calendars/AQMkADAwATMzAGZmAS04MDMxLTIxNDEtMDACLTAwCgBGAAAD1ScTwXRW7EWwj5lpoJewnwcA5RvNX_Jb8E_EFu2ZRtzozAAAAgEGAAAA5RvNX_Jb8E_EFu2ZRtzozAAAAFehBe0AAAA=/events')
-                    .top(10)
+                    .top(31)
                     .select('subject,start,end,createdDateTime,recurrence')
                     .orderby('createdDateTime DESC')
                     .get((err, res) => {
