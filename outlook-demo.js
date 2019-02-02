@@ -227,25 +227,23 @@ $(function () {
                 $('#calendar-status').text('Here are the 10 most recently created events on your calendar.');
                 
                 console.log(events);
-
+            
                 var fullcalevents = events.map(outlookevent => ({
                     start: outlookevent.start.dateTime,
                     end: outlookevent.end.dateTime,
                     title: outlookevent.subject,    
-                    
+                    duration: outlookevent.duration,
                     rrule: outlookevent.recurrence && {
+                        dtstart: outlookevent.recurrence.range.startDate,
                         freq: outlookevent.recurrence.pattern.type,
                         interval: outlookevent.recurrence.pattern.interval,
-                        byweekday: outlookevent.recurrence.pattern.daysOfWeek,
-                        dtstart: outlookevent.recurrence.range.startDate,
-                        until: outlookevent.recurrence.range.endDate
+                        until : outlookevent.recurrence.range.endDate
                     }
-                
                 }));
 
                 console.log(fullcalevents);
                 
-                var calendarEl = document.getElementById('calendar');
+                var calendarEl = document.getElementById('calendar');                
                 var calendar = new FullCalendar.Calendar(calendarEl, {events: fullcalevents});
 
             }
@@ -268,7 +266,7 @@ $(function () {
                 // Get events
                 client
                     .api('/me/calendars/AQMkADAwATMzAGZmAS04MDMxLTIxNDEtMDACLTAwCgBGAAAD1ScTwXRW7EWwj5lpoJewnwcA5RvNX_Jb8E_EFu2ZRtzozAAAAgEGAAAA5RvNX_Jb8E_EFu2ZRtzozAAAAFehBe0AAAA=/events')
-                    .top(31)
+                    .top(60)
                     .select('subject,start,end,createdDateTime,recurrence')
                     .orderby('createdDateTime DESC')
                     .get((err, res) => {

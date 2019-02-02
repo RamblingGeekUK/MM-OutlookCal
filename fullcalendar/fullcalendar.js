@@ -1,5 +1,5 @@
 /*!
- * FullCalendar v4.0.0-alpha.3
+ * FullCalendar v4.0.0-alpha.4
  * Docs & License: https://fullcalendar.io/
  * (c) 2018 Adam Shaw
  */
@@ -12,7 +12,7 @@
 		exports["FullCalendar"] = factory(require("superagent"));
 	else
 		root["FullCalendar"] = factory(root["superagent"]);
-})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_69__) {
+})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_70__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -75,7 +75,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 184);
+/******/ 	return __webpack_require__(__webpack_require__.s = 185);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -117,7 +117,7 @@ exports.__assign = Object.assign || function (t) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var dom_manip_1 = __webpack_require__(3);
 var dom_geom_1 = __webpack_require__(15);
-var dom_event_1 = __webpack_require__(23);
+var dom_event_1 = __webpack_require__(24);
 var marker_1 = __webpack_require__(4);
 var duration_1 = __webpack_require__(9);
 /* FullCalendar-specific DOM Utilities
@@ -510,19 +510,24 @@ exports.computeAlignedDayRange = computeAlignedDayRange;
 // TODO: give nextDayThreshold a default arg
 function computeVisibleDayRange(timedRange, nextDayThreshold) {
     if (nextDayThreshold === void 0) { nextDayThreshold = duration_1.createDuration(0); }
-    var startDay = marker_1.startOfDay(timedRange.start); // the beginning of the day the range starts
-    var end = timedRange.end;
-    var endDay = marker_1.startOfDay(end);
-    var endTimeMS = end.valueOf() - endDay.valueOf(); // # of milliseconds into `endDay`
-    // If the end time is actually inclusively part of the next day and is equal to or
-    // beyond the next day threshold, adjust the end to be the exclusive end of `endDay`.
-    // Otherwise, leaving it as inclusive will cause it to exclude `endDay`.
-    if (endTimeMS && endTimeMS >= duration_1.asRoughMs(nextDayThreshold)) {
-        endDay = marker_1.addDays(endDay, 1);
+    var startDay = null;
+    var endDay = null;
+    if (timedRange.end) {
+        endDay = marker_1.startOfDay(timedRange.end);
+        var endTimeMS = timedRange.end.valueOf() - endDay.valueOf(); // # of milliseconds into `endDay`
+        // If the end time is actually inclusively part of the next day and is equal to or
+        // beyond the next day threshold, adjust the end to be the exclusive end of `endDay`.
+        // Otherwise, leaving it as inclusive will cause it to exclude `endDay`.
+        if (endTimeMS && endTimeMS >= duration_1.asRoughMs(nextDayThreshold)) {
+            endDay = marker_1.addDays(endDay, 1);
+        }
     }
-    // If end is within `startDay` but not past nextDayThreshold, assign the default duration of one day.
-    if (endDay <= startDay) {
-        endDay = marker_1.addDays(startDay, 1);
+    if (timedRange.start) {
+        startDay = marker_1.startOfDay(timedRange.start); // the beginning of the day the range starts
+        // If end is within `startDay` but not past nextDayThreshold, assign the default duration of one day.
+        if (endDay && endDay <= startDay) {
+            endDay = marker_1.addDays(startDay, 1);
+        }
     }
     return { start: startDay, end: endDay };
 }
@@ -635,13 +640,13 @@ exports.insertAfterElement = insertAfterElement;
 function normalizeContent(content) {
     var els;
     if (typeof content === 'string') {
-        els = htmlToNodeList(content);
+        els = htmlToElements(content);
     }
     else if (content instanceof Node) {
         els = [content];
     }
-    else { // assumed to be NodeList or Node[]
-        els = content;
+    else { // Node[] or NodeList
+        els = Array.prototype.slice.call(content);
     }
     return els;
 }
@@ -915,6 +920,11 @@ function dateToUtcArray(date) {
 }
 exports.dateToUtcArray = dateToUtcArray;
 function arrayToUtcDate(a) {
+    // according to web standards (and Safari), a month index is required.
+    // massage if only given a year.
+    if (a.length === 1) {
+        a = a.concat([0]);
+    }
     return new Date(Date.UTC.apply(Date, a));
 }
 exports.arrayToUtcDate = arrayToUtcDate;
@@ -941,9 +951,9 @@ exports.timeAsMs = timeAsMs;
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var misc_1 = __webpack_require__(2);
-var formatting_native_1 = __webpack_require__(187);
-var formatting_cmd_1 = __webpack_require__(57);
-var formatting_func_1 = __webpack_require__(188);
+var formatting_native_1 = __webpack_require__(188);
+var formatting_cmd_1 = __webpack_require__(58);
+var formatting_func_1 = __webpack_require__(189);
 // Formatter Object Creation
 function createFormatter(input, defaultSeparator) {
     if (typeof input === 'object' && input) { // non-null object
@@ -1336,7 +1346,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var date_range_1 = __webpack_require__(8);
 var misc_1 = __webpack_require__(2);
 var EventApi_1 = __webpack_require__(16);
-var event_ui_1 = __webpack_require__(24);
+var event_ui_1 = __webpack_require__(25);
 var object_1 = __webpack_require__(12);
 /*
 Specifying nextDayThreshold signals that all-day ranges should be sliced.
@@ -1367,18 +1377,17 @@ function sliceEventStore(eventStore, eventUiBases, framingRange, nextDayThreshol
         var def = eventStore.defs[instance.defId];
         var ui = eventUis[def.defId];
         var origRange = instance.range;
-        var slicedRange = date_range_1.intersectRanges(origRange, framingRange);
-        var visibleRange = void 0;
+        var normalRange = (!def.allDay && nextDayThreshold) ?
+            misc_1.computeVisibleDayRange(origRange, nextDayThreshold) :
+            origRange;
+        var slicedRange = date_range_1.intersectRanges(normalRange, framingRange);
         if (slicedRange) {
-            visibleRange = (!def.allDay && nextDayThreshold) ?
-                misc_1.computeVisibleDayRange(slicedRange, nextDayThreshold) :
-                slicedRange;
             if (def.rendering === 'inverse-background') {
                 if (def.groupId) {
-                    inverseBgByGroupId[def.groupId].push(visibleRange);
+                    inverseBgByGroupId[def.groupId].push(slicedRange);
                 }
                 else {
-                    inverseBgByDefId[instance.defId].push(visibleRange);
+                    inverseBgByDefId[instance.defId].push(slicedRange);
                 }
             }
             else {
@@ -1386,9 +1395,9 @@ function sliceEventStore(eventStore, eventUiBases, framingRange, nextDayThreshol
                     def: def,
                     ui: ui,
                     instance: instance,
-                    range: visibleRange,
-                    isStart: origRange.start && origRange.start.valueOf() === slicedRange.start.valueOf(),
-                    isEnd: origRange.end && origRange.end.valueOf() === slicedRange.end.valueOf()
+                    range: slicedRange,
+                    isStart: normalRange.start && normalRange.start.valueOf() === slicedRange.start.valueOf(),
+                    isEnd: normalRange.end && normalRange.end.valueOf() === slicedRange.end.valueOf()
                 });
             }
         }
@@ -1636,12 +1645,13 @@ exports.isPropsEqual = isPropsEqual;
 
 
 /***/ }),
-/* 13 */
+/* 13 */,
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var event_1 = __webpack_require__(25);
+var event_1 = __webpack_require__(26);
 var recurring_event_1 = __webpack_require__(41);
 var object_1 = __webpack_require__(12);
 function parseEvents(rawEvents, sourceId, calendar, allowOpenRange) {
@@ -1772,13 +1782,12 @@ exports.filterEventStoreDefs = filterEventStoreDefs;
 
 
 /***/ }),
-/* 14 */,
 /* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var geom_1 = __webpack_require__(31);
-var scrollbars_1 = __webpack_require__(186);
+var geom_1 = __webpack_require__(32);
+var scrollbars_1 = __webpack_require__(187);
 function computeEdges(el, getPadding) {
     if (getPadding === void 0) { getPadding = false; }
     var computedStyle = window.getComputedStyle(el);
@@ -1890,12 +1899,12 @@ exports.computeClippingRect = computeClippingRect;
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var event_1 = __webpack_require__(25);
-var event_ui_1 = __webpack_require__(24);
+var event_1 = __webpack_require__(26);
+var event_ui_1 = __webpack_require__(25);
 var misc_1 = __webpack_require__(2);
 var duration_1 = __webpack_require__(9);
 var formatting_1 = __webpack_require__(7);
-var EventSourceApi_1 = __webpack_require__(141);
+var EventSourceApi_1 = __webpack_require__(142);
 var EventApi = /** @class */ (function () {
     function EventApi(calendar, def, instance) {
         this._calendar = calendar;
@@ -2204,7 +2213,7 @@ exports.default = EventApi;
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var array_1 = __webpack_require__(56);
+var array_1 = __webpack_require__(57);
 function memoize(workerFunc) {
     var args;
     var res;
@@ -2241,7 +2250,7 @@ exports.memoizeOutput = memoizeOutput;
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var array_1 = __webpack_require__(56);
+var array_1 = __webpack_require__(57);
 function memoizeRendering(renderFunc, unrenderFunc, dependencies) {
     if (dependencies === void 0) { dependencies = []; }
     var dependents = [];
@@ -2375,9 +2384,9 @@ exports.getDayClasses = getDayClasses;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var Component_1 = __webpack_require__(33);
+var Component_1 = __webpack_require__(34);
 var date_range_1 = __webpack_require__(8);
-var browser_context_1 = __webpack_require__(60);
+var browser_context_1 = __webpack_require__(61);
 var dom_manip_1 = __webpack_require__(3);
 var validation_1 = __webpack_require__(42);
 var EventApi_1 = __webpack_require__(16);
@@ -2514,7 +2523,7 @@ var DateComponent = /** @class */ (function (_super) {
             calendar.afterSizingTriggers._eventsPositioned = [null]; // fire once
         }
     };
-    DateComponent.prototype.triggerWillRemoveSegs = function (segs) {
+    DateComponent.prototype.triggerWillRemoveSegs = function (segs, isMirrors) {
         var calendar = this.calendar;
         for (var _i = 0, segs_2 = segs; _i < segs_2.length; _i++) {
             var seg = segs_2[_i];
@@ -2526,6 +2535,7 @@ var DateComponent = /** @class */ (function (_super) {
                 this.publiclyTrigger('eventDestroy', [
                     {
                         event: new EventApi_1.default(calendar, seg.eventRange.def, seg.eventRange.instance),
+                        isMirror: isMirrors,
                         el: seg.el,
                         view: this // ?
                     }
@@ -2563,7 +2573,8 @@ DateComponent.prototype.bgSegSelector = '.fc-bgevent:not(.fc-nonbusiness)';
 
 
 /***/ }),
-/* 23 */
+/* 23 */,
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2630,7 +2641,7 @@ exports.whenTransitionDone = whenTransitionDone;
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2720,14 +2731,14 @@ function combineTwoEventUis(item0, item1) {
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var misc_1 = __webpack_require__(2);
 var marker_1 = __webpack_require__(4);
 var recurring_event_1 = __webpack_require__(41);
-var event_ui_1 = __webpack_require__(24);
+var event_ui_1 = __webpack_require__(25);
 var tslib_1 = __webpack_require__(1);
 exports.NON_DATE_PROPS = {
     id: String,
@@ -2839,11 +2850,11 @@ function parseSingle(raw, allDayDefault, calendar, leftovers, allowOpenRange) {
     }
     if (endMeta) {
         endMarker = endMeta.marker;
+        if (allDay) {
+            endMarker = marker_1.startOfDay(endMarker);
+        }
         if (startMarker && endMarker <= startMarker) {
             endMarker = null;
-        }
-        else if (allDay) {
-            endMarker = marker_1.startOfDay(endMarker);
         }
     }
     if (endMarker) {
@@ -2892,7 +2903,7 @@ function computeIsAllDayDefault(sourceId, calendar) {
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -2911,7 +2922,7 @@ after class:
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var misc_1 = __webpack_require__(2);
-var Mixin_1 = __webpack_require__(146);
+var Mixin_1 = __webpack_require__(147);
 var EmitterMixin = /** @class */ (function (_super) {
     tslib_1.__extends(EmitterMixin, _super);
     function EmitterMixin() {
@@ -2979,15 +2990,15 @@ function removeFromHash(hash, type, handler) {
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var EmitterMixin_1 = __webpack_require__(26);
+var EmitterMixin_1 = __webpack_require__(27);
 var DateComponent_1 = __webpack_require__(22);
 var date_span_1 = __webpack_require__(46);
 var dom_geom_1 = __webpack_require__(15);
-var geom_1 = __webpack_require__(31);
+var geom_1 = __webpack_require__(32);
 var date_range_1 = __webpack_require__(8);
 /*
 Tracks movement over multiple droppable areas (aka "hits")
@@ -3139,12 +3150,12 @@ exports.isHitsEqual = isHitsEqual;
 
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var misc_1 = __webpack_require__(2);
-var event_ui_1 = __webpack_require__(24);
+var event_ui_1 = __webpack_require__(25);
 var SIMPLE_SOURCE_PROPS = {
     id: String,
     allDayDefault: Boolean,
@@ -3199,9 +3210,9 @@ function parseEventSourceProps(raw, meta, sourceDefId, calendar) {
 
 
 /***/ }),
-/* 29 */,
 /* 30 */,
-/* 31 */
+/* 31 */,
+/* 32 */
 /***/ (function(module, exports) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3253,7 +3264,7 @@ exports.diffPoints = diffPoints;
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3319,7 +3330,7 @@ Theme.prototype.iconOverridePrefix = '';
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3390,16 +3401,16 @@ function recycleProps(oldProps, newProps, equalityFuncs) {
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var PointerDragging_1 = __webpack_require__(45);
 var misc_1 = __webpack_require__(2);
-var ElementMirror_1 = __webpack_require__(190);
-var ElementDragging_1 = __webpack_require__(61);
-var AutoScroller_1 = __webpack_require__(191);
+var ElementMirror_1 = __webpack_require__(191);
+var ElementDragging_1 = __webpack_require__(62);
+var AutoScroller_1 = __webpack_require__(192);
 /*
 Monitors dragging on an element. Has a number of high-level features:
 - minimum distance required before dragging
@@ -3557,7 +3568,7 @@ exports.default = FeaturefulElementDragging;
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3658,7 +3669,7 @@ exports.mergeOptions = mergeOptions;
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3681,7 +3692,8 @@ function createPlugin(input) {
         isPropsValid: input.isPropsValid || null,
         externalDefTransforms: input.externalDefTransforms || [],
         eventResizeJoinTransforms: input.eventResizeJoinTransforms || [],
-        viewContainerModifiers: input.viewContainerModifiers || []
+        viewContainerModifiers: input.viewContainerModifiers || [],
+        eventDropTransformers: input.eventDropTransformers || []
     };
 }
 exports.createPlugin = createPlugin;
@@ -3701,7 +3713,8 @@ var PluginSystem = /** @class */ (function () {
             isPropsValid: null,
             externalDefTransforms: [],
             eventResizeJoinTransforms: [],
-            viewContainerModifiers: []
+            viewContainerModifiers: [],
+            eventDropTransformers: []
         };
         this.addedHash = {};
     }
@@ -3733,13 +3746,13 @@ function combineHooks(hooks0, hooks1) {
         isPropsValid: hooks1.isPropsValid || hooks0.isPropsValid,
         externalDefTransforms: hooks0.externalDefTransforms.concat(hooks1.externalDefTransforms),
         eventResizeJoinTransforms: hooks0.eventResizeJoinTransforms.concat(hooks1.eventResizeJoinTransforms),
-        viewContainerModifiers: hooks0.viewContainerModifiers.concat(hooks1.viewContainerModifiers)
+        viewContainerModifiers: hooks0.viewContainerModifiers.concat(hooks1.viewContainerModifiers),
+        eventDropTransformers: hooks0.eventDropTransformers.concat(hooks1.eventDropTransformers)
     };
 }
 
 
 /***/ }),
-/* 37 */,
 /* 38 */,
 /* 39 */,
 /* 40 */,
@@ -3792,11 +3805,11 @@ exports.expandRecurringRanges = expandRecurringRanges;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var event_store_1 = __webpack_require__(13);
+var event_store_1 = __webpack_require__(14);
 var date_range_1 = __webpack_require__(8);
 var EventApi_1 = __webpack_require__(16);
 var event_rendering_1 = __webpack_require__(10);
-var eventStore_1 = __webpack_require__(142);
+var eventStore_1 = __webpack_require__(143);
 var object_1 = __webpack_require__(12);
 // high-level segmenting-aware tester functions
 // ------------------------------------------------------------------------------------------------------------------------
@@ -4005,7 +4018,7 @@ exports.normalizeConstraint = normalizeConstraint;
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var duration_1 = __webpack_require__(9);
-var event_store_1 = __webpack_require__(13);
+var event_store_1 = __webpack_require__(14);
 var misc_1 = __webpack_require__(2);
 var marker_1 = __webpack_require__(4);
 var event_rendering_1 = __webpack_require__(10);
@@ -4041,6 +4054,9 @@ function applyMutationToEventDef(eventDef, eventConfig, mutation, appliers, cale
     for (var _i = 0, appliers_1 = appliers; _i < appliers_1.length; _i++) {
         var applier = appliers_1[_i];
         applier(copy, mutation, calendar);
+    }
+    if (!copy.hasEnd && calendar.opt('forceEventDuration')) {
+        copy.hasEnd = true;
     }
     return copy;
 }
@@ -4110,7 +4126,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var dom_geom_1 = __webpack_require__(15);
 var dom_manip_1 = __webpack_require__(3);
-var scroll_controller_1 = __webpack_require__(149);
+var scroll_controller_1 = __webpack_require__(150);
 /*
 Embodies a div that has potential scrollbars
 */
@@ -4181,9 +4197,9 @@ exports.default = ScrollComponent;
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var exportHooks = __webpack_require__(55);
+var exportHooks = __webpack_require__(56);
 var dom_manip_1 = __webpack_require__(3);
-var EmitterMixin_1 = __webpack_require__(26);
+var EmitterMixin_1 = __webpack_require__(27);
 exportHooks.touchMouseIgnoreWait = 500;
 var ignoreMouseDepth = 0;
 var listenerCnt = 0;
@@ -4299,12 +4315,12 @@ var PointerDragging = /** @class */ (function () {
         this.containerEl = containerEl;
         this.emitter = new EmitterMixin_1.default();
         containerEl.addEventListener('mousedown', this.handleMouseDown);
-        containerEl.addEventListener('touchstart', this.handleTouchStart);
+        containerEl.addEventListener('touchstart', this.handleTouchStart, { passive: true });
         listenerCreated();
     }
     PointerDragging.prototype.destroy = function () {
         this.containerEl.removeEventListener('mousedown', this.handleMouseDown);
-        this.containerEl.removeEventListener('touchstart', this.handleTouchStart);
+        this.containerEl.removeEventListener('touchstart', this.handleTouchStart, { passive: true });
         listenerDestroyed();
     };
     PointerDragging.prototype.tryStart = function (ev) {
@@ -4423,7 +4439,7 @@ function listenerCreated() {
 }
 function listenerDestroyed() {
     if (!(--listenerCnt)) {
-        window.removeEventListener('touchmove', onWindowTouchMove);
+        window.removeEventListener('touchmove', onWindowTouchMove, { passive: false });
     }
 }
 function onWindowTouchMove(ev) {
@@ -4440,7 +4456,7 @@ function onWindowTouchMove(ev) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var date_range_1 = __webpack_require__(8);
 var misc_1 = __webpack_require__(2);
-var event_1 = __webpack_require__(25);
+var event_1 = __webpack_require__(26);
 var event_rendering_1 = __webpack_require__(10);
 var STANDARD_PROPS = {
     start: null,
@@ -4646,13 +4662,13 @@ var DateProfileGenerator = /** @class */ (function () {
     // Builds a structure with info about what the dates/ranges will be for the "prev" view.
     DateProfileGenerator.prototype.buildPrev = function (currentDateProfile) {
         var dateEnv = this.dateEnv;
-        var prevDate = dateEnv.subtract(dateEnv.startOf(currentDateProfile.currentDate, currentDateProfile.currentRangeUnit), currentDateProfile.dateIncrement);
+        var prevDate = dateEnv.subtract(currentDateProfile.currentRange.start, currentDateProfile.dateIncrement);
         return this.build(prevDate, -1);
     };
     // Builds a structure with info about what the dates/ranges will be for the "next" view.
     DateProfileGenerator.prototype.buildNext = function (currentDateProfile) {
         var dateEnv = this.dateEnv;
-        var nextDate = dateEnv.add(dateEnv.startOf(currentDateProfile.currentDate, currentDateProfile.currentRangeUnit), currentDateProfile.dateIncrement);
+        var nextDate = dateEnv.add(currentDateProfile.currentRange.start, currentDateProfile.dateIncrement);
         return this.build(nextDate, 1);
     };
     // Builds a structure holding dates/ranges for rendering around the given date.
@@ -4685,9 +4701,6 @@ var DateProfileGenerator = /** @class */ (function () {
         maxTime = duration_1.createDuration(this.options.maxTime);
         activeRange = this.adjustActiveRange(activeRange, minTime, maxTime);
         activeRange = date_range_1.intersectRanges(activeRange, validRange); // might return null
-        if (activeRange) {
-            currentDate = date_range_1.constrainMarkerToRange(currentDate, activeRange);
-        }
         // it's invalid if the originally requested date is not contained,
         // or if the range is completely outside of the valid range.
         isValid = date_range_1.rangesIntersect(currentInfo.range, validRange);
@@ -4695,7 +4708,6 @@ var DateProfileGenerator = /** @class */ (function () {
             // constraint for where prev/next operations can go and where events can be dragged/resized to.
             // an object with optional start and end properties.
             validRange: validRange,
-            currentDate: currentDate,
             // range the view is formally responsible for.
             // for example, a month view might have 1st-31st, excluding padded dates
             currentRange: currentInfo.range,
@@ -4974,7 +4986,7 @@ var misc_1 = __webpack_require__(2);
 var DateProfileGenerator_1 = __webpack_require__(48);
 var marker_1 = __webpack_require__(4);
 var duration_1 = __webpack_require__(9);
-var EmitterMixin_1 = __webpack_require__(26);
+var EmitterMixin_1 = __webpack_require__(27);
 var dom_manip_1 = __webpack_require__(3);
 var DateComponent_1 = __webpack_require__(22);
 var event_rendering_1 = __webpack_require__(10);
@@ -5289,8 +5301,8 @@ var FgEventRenderer = /** @class */ (function () {
         this.isSizeDirty = true;
         this.context.view.triggerRenderedSegs(this.segs, Boolean(mirrorInfo));
     };
-    FgEventRenderer.prototype.unrender = function () {
-        this.context.view.triggerWillRemoveSegs(this.segs);
+    FgEventRenderer.prototype.unrender = function (_segs, mirrorInfo) {
+        this.context.view.triggerWillRemoveSegs(this.segs, Boolean(mirrorInfo));
         this.detachSegs(this.segs);
         this.segs = [];
     };
@@ -5501,8 +5513,8 @@ exports.buildSegCompareObj = buildSegCompareObj;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var dom_geom_1 = __webpack_require__(15);
-var geom_1 = __webpack_require__(31);
-var scroll_geom_cache_1 = __webpack_require__(150);
+var geom_1 = __webpack_require__(32);
+var scroll_geom_cache_1 = __webpack_require__(151);
 /*
 When this class is instantiated, it records the offset of an element (relative to the document topleft),
 and continues to monitor scrolling, updating the cached coordinates if it needs to.
@@ -5549,7 +5561,8 @@ var OffsetTracker = /** @class */ (function () {
         var point = { left: pageX, top: pageY };
         for (var _i = 0, _a = this.scrollCaches; _i < _a.length; _i++) {
             var scrollCache = _a[_i];
-            if (!geom_1.pointInsideRect(point, scrollCache.clientRect)) {
+            if (!isIgnoredClipping(scrollCache.getEventTarget()) &&
+                !geom_1.pointInsideRect(point, scrollCache.clientRect)) {
                 return false;
             }
         }
@@ -5558,31 +5571,38 @@ var OffsetTracker = /** @class */ (function () {
     return OffsetTracker;
 }());
 exports.default = OffsetTracker;
+// certain clipping containers should never constrain interactions, like <html> and <body>
+// https://github.com/fullcalendar/fullcalendar/issues/3615
+function isIgnoredClipping(node) {
+    var tagName = node.tagName;
+    return tagName === 'HTML' || tagName === 'BODY';
+}
 
 
 /***/ }),
 /* 52 */,
 /* 53 */,
 /* 54 */,
-/* 55 */
+/* 55 */,
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.version = '4.0.0-alpha.3';
+exports.version = '4.0.0-alpha.4';
 // When introducing internal API incompatibilities (where fullcalendar plugins would break),
 // the minor version of the calendar should be upped (ex: 2.7.2 -> 2.8.0)
 // and the below integer should be incremented.
 exports.internalApiVersion = 12;
 // types
-var input_types_1 = __webpack_require__(185);
+var input_types_1 = __webpack_require__(186);
 exports.OptionsInput = input_types_1.OptionsInput;
-var event_1 = __webpack_require__(25);
+var event_1 = __webpack_require__(26);
 exports.EventInput = event_1.EventInput;
 exports.EventDef = event_1.EventDef;
 exports.EventDefHash = event_1.EventDefHash;
 exports.EventInstance = event_1.EventInstance;
 exports.EventInstanceHash = event_1.EventInstanceHash;
-var business_hours_1 = __webpack_require__(143);
+var business_hours_1 = __webpack_require__(144);
 exports.BusinessHoursInput = business_hours_1.BusinessHoursInput;
 exports.parseBusinessHours = business_hours_1.parseBusinessHours;
 var misc_1 = __webpack_require__(2);
@@ -5601,7 +5621,7 @@ exports.computeVisibleDayRange = misc_1.computeVisibleDayRange;
 var html_1 = __webpack_require__(11);
 exports.htmlEscape = html_1.htmlEscape;
 exports.cssToStr = html_1.cssToStr;
-var array_1 = __webpack_require__(56);
+var array_1 = __webpack_require__(57);
 exports.removeExact = array_1.removeExact;
 exports.isArraysEqual = array_1.isArraysEqual;
 var memoize_1 = __webpack_require__(17);
@@ -5610,7 +5630,7 @@ exports.memoizeOutput = memoize_1.memoizeOutput;
 var memoized_rendering_1 = __webpack_require__(20);
 exports.memoizeRendering = memoized_rendering_1.memoizeRendering;
 exports.MemoizedRendering = memoized_rendering_1.MemoizedRendering;
-var geom_1 = __webpack_require__(31);
+var geom_1 = __webpack_require__(32);
 exports.intersectRects = geom_1.intersectRects;
 var object_1 = __webpack_require__(12);
 exports.isPropsEqual = object_1.isPropsEqual;
@@ -5629,24 +5649,24 @@ exports.applyStyle = dom_manip_1.applyStyle;
 exports.applyStyleProp = dom_manip_1.applyStyleProp;
 exports.elementMatches = dom_manip_1.elementMatches;
 exports.forceClassName = dom_manip_1.forceClassName;
-var event_store_1 = __webpack_require__(13);
+var event_store_1 = __webpack_require__(14);
 exports.EventStore = event_store_1.EventStore;
 exports.filterEventStoreDefs = event_store_1.filterEventStoreDefs;
 exports.createEmptyEventStore = event_store_1.createEmptyEventStore;
 exports.mergeEventStores = event_store_1.mergeEventStores;
-var event_ui_1 = __webpack_require__(24);
+var event_ui_1 = __webpack_require__(25);
 exports.EventUiHash = event_ui_1.EventUiHash;
 exports.EventUi = event_ui_1.EventUi;
 exports.processScopedUiProps = event_ui_1.processScopedUiProps;
 exports.combineEventUis = event_ui_1.combineEventUis;
-var event_splitting_1 = __webpack_require__(144);
+var event_splitting_1 = __webpack_require__(145);
 exports.Splitter = event_splitting_1.default;
 exports.SplittableProps = event_splitting_1.SplittableProps;
 var date_rendering_1 = __webpack_require__(21);
 exports.buildGotoAnchorHtml = date_rendering_1.buildGotoAnchorHtml;
 exports.getAllDayHtml = date_rendering_1.getAllDayHtml;
 exports.getDayClasses = date_rendering_1.getDayClasses;
-var dom_event_1 = __webpack_require__(23);
+var dom_event_1 = __webpack_require__(24);
 exports.preventDefault = dom_event_1.preventDefault;
 exports.listenBySelector = dom_event_1.listenBySelector;
 exports.whenTransitionDone = dom_event_1.whenTransitionDone;
@@ -5655,9 +5675,9 @@ exports.computeInnerRect = dom_geom_1.computeInnerRect;
 exports.computeEdges = dom_geom_1.computeEdges;
 exports.computeHeightAndMargins = dom_geom_1.computeHeightAndMargins;
 exports.getClippingParents = dom_geom_1.getClippingParents;
-var promise_1 = __webpack_require__(145);
+var promise_1 = __webpack_require__(146);
 exports.unpromisify = promise_1.unpromisify;
-var EmitterMixin_1 = __webpack_require__(26);
+var EmitterMixin_1 = __webpack_require__(27);
 exports.EmitterMixin = EmitterMixin_1.default;
 exports.EmitterInterface = EmitterMixin_1.EmitterInterface;
 var date_range_1 = __webpack_require__(8);
@@ -5666,25 +5686,25 @@ exports.rangeContainsMarker = date_range_1.rangeContainsMarker;
 exports.intersectRanges = date_range_1.intersectRanges;
 exports.rangesEqual = date_range_1.rangesEqual;
 exports.rangesIntersect = date_range_1.rangesIntersect;
-var ThemeRegistry_1 = __webpack_require__(58);
+var ThemeRegistry_1 = __webpack_require__(59);
 exports.defineThemeSystem = ThemeRegistry_1.defineThemeSystem;
-var Mixin_1 = __webpack_require__(146);
+var Mixin_1 = __webpack_require__(147);
 exports.Mixin = Mixin_1.default;
-var PositionCache_1 = __webpack_require__(59);
+var PositionCache_1 = __webpack_require__(60);
 exports.PositionCache = PositionCache_1.default;
 var ScrollComponent_1 = __webpack_require__(44);
 exports.ScrollComponent = ScrollComponent_1.default;
 exports.ScrollbarWidths = ScrollComponent_1.ScrollbarWidths;
-var Theme_1 = __webpack_require__(32);
+var Theme_1 = __webpack_require__(33);
 exports.Theme = Theme_1.default;
-var Component_1 = __webpack_require__(33);
+var Component_1 = __webpack_require__(34);
 exports.Component = Component_1.default;
 exports.ComponentContext = Component_1.ComponentContext;
 var DateComponent_1 = __webpack_require__(22);
 exports.DateComponent = DateComponent_1.default;
 exports.Seg = DateComponent_1.Seg;
 exports.EventSegUiInteractionState = DateComponent_1.EventSegUiInteractionState;
-var Calendar_1 = __webpack_require__(153);
+var Calendar_1 = __webpack_require__(154);
 exports.Calendar = Calendar_1.default;
 exports.DatePointTransform = Calendar_1.DatePointTransform;
 exports.DateSpanTransform = Calendar_1.DateSpanTransform;
@@ -5693,37 +5713,37 @@ exports.View = View_1.default;
 exports.ViewProps = View_1.ViewProps;
 var FgEventRenderer_1 = __webpack_require__(50);
 exports.FgEventRenderer = FgEventRenderer_1.default;
-var FillRenderer_1 = __webpack_require__(63);
+var FillRenderer_1 = __webpack_require__(64);
 exports.FillRenderer = FillRenderer_1.default;
-var AgendaView_1 = __webpack_require__(159);
+var AgendaView_1 = __webpack_require__(160);
 exports.AgendaView = AgendaView_1.default;
 exports.buildAgendaDayTable = AgendaView_1.buildDayTable;
-var AbstractAgendaView_1 = __webpack_require__(160);
+var AbstractAgendaView_1 = __webpack_require__(161);
 exports.AbstractAgendaView = AbstractAgendaView_1.default;
-var AbstractBasicView_1 = __webpack_require__(169);
+var AbstractBasicView_1 = __webpack_require__(170);
 exports.AbstractBasicView = AbstractBasicView_1.default;
-var TimeGrid_1 = __webpack_require__(161);
+var TimeGrid_1 = __webpack_require__(162);
 exports.TimeGrid = TimeGrid_1.default;
 exports.TimeGridSeg = TimeGrid_1.TimeGridSeg;
-var SimpleTimeGrid_1 = __webpack_require__(168);
+var SimpleTimeGrid_1 = __webpack_require__(169);
 exports.TimeGridSlicer = SimpleTimeGrid_1.TimeGridSlicer;
 exports.buildDayRanges = SimpleTimeGrid_1.buildDayRanges;
-var SimpleDayGrid_1 = __webpack_require__(68);
+var SimpleDayGrid_1 = __webpack_require__(69);
 exports.DayGridSlicer = SimpleDayGrid_1.DayGridSlicer;
-var DayGrid_1 = __webpack_require__(64);
+var DayGrid_1 = __webpack_require__(65);
 exports.DayGrid = DayGrid_1.default;
 exports.DayGridSeg = DayGrid_1.DayGridSeg;
-var BasicView_1 = __webpack_require__(170);
+var BasicView_1 = __webpack_require__(171);
 exports.BasicView = BasicView_1.default;
 exports.buildBasicDayTable = BasicView_1.buildDayTable;
-var ListView_1 = __webpack_require__(171);
+var ListView_1 = __webpack_require__(172);
 exports.ListView = ListView_1.default;
 var DateProfileGenerator_1 = __webpack_require__(48);
 exports.DateProfileGenerator = DateProfileGenerator_1.default;
 exports.DateProfile = DateProfileGenerator_1.DateProfile;
-var view_def_1 = __webpack_require__(157);
+var view_def_1 = __webpack_require__(158);
 exports.ViewDef = view_def_1.ViewDef;
-var view_spec_1 = __webpack_require__(156);
+var view_spec_1 = __webpack_require__(157);
 exports.ViewSpec = view_spec_1.ViewSpec;
 exports.ViewSpecTransformer = view_spec_1.ViewSpecTransformer;
 var date_span_1 = __webpack_require__(46);
@@ -5750,7 +5770,7 @@ exports.asRoughSeconds = duration_1.asRoughSeconds;
 exports.asRoughMs = duration_1.asRoughMs;
 exports.wholeDivideDurations = duration_1.wholeDivideDurations;
 exports.greatestDurationDenominator = duration_1.greatestDurationDenominator;
-var env_1 = __webpack_require__(62);
+var env_1 = __webpack_require__(63);
 exports.DateEnv = env_1.DateEnv;
 exports.DateMarkerMeta = env_1.DateMarkerMeta;
 var locale_1 = __webpack_require__(47);
@@ -5761,68 +5781,68 @@ var formatting_1 = __webpack_require__(7);
 exports.DateFormatter = formatting_1.DateFormatter;
 exports.createFormatter = formatting_1.createFormatter;
 exports.VerboseFormattingArg = formatting_1.VerboseFormattingArg;
-var timezone_1 = __webpack_require__(154);
+var timezone_1 = __webpack_require__(155);
 exports.NamedTimeZoneImpl = timezone_1.NamedTimeZoneImpl;
 exports.registerNamedTimeZoneImpl = timezone_1.registerNamedTimeZoneImpl;
-var formatting_cmd_1 = __webpack_require__(57);
+var formatting_cmd_1 = __webpack_require__(58);
 exports.registerCmdFormatter = formatting_cmd_1.registerCmdFormatter;
-var parsing_1 = __webpack_require__(155);
+var parsing_1 = __webpack_require__(156);
 exports.parseMarker = parsing_1.parse;
-var event_source_1 = __webpack_require__(28);
+var event_source_1 = __webpack_require__(29);
 exports.registerEventSourceDef = event_source_1.registerEventSourceDef;
 var misc_2 = __webpack_require__(2);
 exports.refineProps = misc_2.refineProps;
 var PointerDragging_1 = __webpack_require__(45);
 exports.PointerDragging = PointerDragging_1.default;
 exports.PointerDragEvent = PointerDragging_1.PointerDragEvent;
-var ElementDragging_1 = __webpack_require__(61);
+var ElementDragging_1 = __webpack_require__(62);
 exports.ElementDragging = ElementDragging_1.default;
-var ExternalDraggable_1 = __webpack_require__(210);
+var ExternalDraggable_1 = __webpack_require__(211);
 exports.Draggable = ExternalDraggable_1.default;
-var ThirdPartyDraggable_1 = __webpack_require__(212);
+var ThirdPartyDraggable_1 = __webpack_require__(213);
 exports.ThirdPartyDraggable = ThirdPartyDraggable_1.default;
-var HitDragging_1 = __webpack_require__(27);
+var HitDragging_1 = __webpack_require__(28);
 exports.Hit = HitDragging_1.Hit;
-var DateSelecting_1 = __webpack_require__(151);
+var DateSelecting_1 = __webpack_require__(152);
 exports.dateSelectionJoinTransformer = DateSelecting_1.dateSelectionJoinTransformer;
-var formatting_api_1 = __webpack_require__(214);
+var formatting_api_1 = __webpack_require__(215);
 exports.formatDate = formatting_api_1.formatDate;
 exports.formatRange = formatting_api_1.formatRange;
-var options_1 = __webpack_require__(35);
+var options_1 = __webpack_require__(36);
 exports.globalDefaults = options_1.globalDefaults;
 var recurring_event_1 = __webpack_require__(41);
 exports.registerRecurringType = recurring_event_1.registerRecurringType;
 exports.ParsedRecurring = recurring_event_1.ParsedRecurring;
-var plugin_system_1 = __webpack_require__(36);
+var plugin_system_1 = __webpack_require__(37);
 exports.createPlugin = plugin_system_1.createPlugin;
 exports.PluginDef = plugin_system_1.PluginDef;
 exports.PluginDefInput = plugin_system_1.PluginDefInput;
 exports.ViewPropsTransformer = plugin_system_1.ViewPropsTransformer;
 exports.ViewContainerModifier = plugin_system_1.ViewContainerModifier;
-var types_1 = __webpack_require__(215);
+var types_1 = __webpack_require__(216);
 exports.reducerFunc = types_1.reducerFunc;
 exports.Action = types_1.Action;
 exports.CalendarState = types_1.CalendarState;
-var CalendarComponent_1 = __webpack_require__(158);
+var CalendarComponent_1 = __webpack_require__(159);
 exports.CalendarComponentProps = CalendarComponent_1.CalendarComponentProps;
-var table_utils_1 = __webpack_require__(167);
+var table_utils_1 = __webpack_require__(168);
 exports.computeFallbackHeaderFormat = table_utils_1.computeFallbackHeaderFormat;
 exports.renderDateCell = table_utils_1.renderDateCell;
 var OffsetTracker_1 = __webpack_require__(51);
 exports.OffsetTracker = OffsetTracker_1.default;
-var DaySeries_1 = __webpack_require__(65);
+var DaySeries_1 = __webpack_require__(66);
 exports.DaySeries = DaySeries_1.default;
-var event_interaction_state_1 = __webpack_require__(216);
+var event_interaction_state_1 = __webpack_require__(217);
 exports.EventInteractionState = event_interaction_state_1.EventInteractionState;
 var event_rendering_1 = __webpack_require__(10);
 exports.EventRenderRange = event_rendering_1.EventRenderRange;
 exports.sliceEventStore = event_rendering_1.sliceEventStore;
 exports.hasBgRendering = event_rendering_1.hasBgRendering;
-var DayTable_1 = __webpack_require__(66);
+var DayTable_1 = __webpack_require__(67);
 exports.DayTable = DayTable_1.default;
 exports.DayTableSeg = DayTable_1.DayTableSeg;
 exports.DayTableCell = DayTable_1.DayTableCell;
-var slicing_utils_1 = __webpack_require__(67);
+var slicing_utils_1 = __webpack_require__(68);
 exports.Slicer = slicing_utils_1.default;
 exports.SlicedProps = slicing_utils_1.SlicedProps;
 var event_mutation_1 = __webpack_require__(43);
@@ -5837,7 +5857,7 @@ exports.EventApi = EventApi_1.default;
 
 
 /***/ }),
-/* 56 */
+/* 57 */
 /***/ (function(module, exports) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -5888,7 +5908,7 @@ exports.isArraysEqual = isArraysEqual;
 
 
 /***/ }),
-/* 57 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -5926,12 +5946,12 @@ exports.CmdFormatter = CmdFormatter;
 
 
 /***/ }),
-/* 58 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var StandardTheme_1 = __webpack_require__(147);
-var JqueryUiTheme_1 = __webpack_require__(148);
+var StandardTheme_1 = __webpack_require__(148);
+var JqueryUiTheme_1 = __webpack_require__(149);
 var themeClassHash = {};
 function defineThemeSystem(themeName, themeClass) {
     themeClassHash[themeName] = themeClass;
@@ -5952,7 +5972,7 @@ exports.getThemeSystemClass = getThemeSystemClass;
 
 
 /***/ }),
-/* 59 */
+/* 60 */
 /***/ (function(module, exports) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -6047,16 +6067,16 @@ exports.default = PositionCache;
 
 
 /***/ }),
-/* 60 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var DateClicking_1 = __webpack_require__(189);
-var DateSelecting_1 = __webpack_require__(151);
-var EventClicking_1 = __webpack_require__(192);
-var EventHovering_1 = __webpack_require__(193);
-var EventDragging_1 = __webpack_require__(152);
-var EventResizing_1 = __webpack_require__(194);
+var DateClicking_1 = __webpack_require__(190);
+var DateSelecting_1 = __webpack_require__(152);
+var EventClicking_1 = __webpack_require__(193);
+var EventHovering_1 = __webpack_require__(194);
+var EventDragging_1 = __webpack_require__(153);
+var EventResizing_1 = __webpack_require__(195);
 var BrowserContext = /** @class */ (function () {
     function BrowserContext() {
         this.componentHash = {};
@@ -6097,11 +6117,11 @@ exports.default = new BrowserContext();
 
 
 /***/ }),
-/* 61 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var EmitterMixin_1 = __webpack_require__(26);
+var EmitterMixin_1 = __webpack_require__(27);
 /*
 An abstraction for a dragging interaction originating on an event.
 Does higher-level things than PointerDragger, such as possibly:
@@ -6133,18 +6153,18 @@ exports.default = ElementDragging;
 
 
 /***/ }),
-/* 62 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var marker_1 = __webpack_require__(4);
-var calendar_system_1 = __webpack_require__(196);
-var timezone_1 = __webpack_require__(154);
+var calendar_system_1 = __webpack_require__(197);
+var timezone_1 = __webpack_require__(155);
 var duration_1 = __webpack_require__(9);
 var formatting_1 = __webpack_require__(7);
-var parsing_1 = __webpack_require__(155);
+var parsing_1 = __webpack_require__(156);
 var misc_1 = __webpack_require__(2);
-var formatting_cmd_1 = __webpack_require__(57);
+var formatting_cmd_1 = __webpack_require__(58);
 var DateEnv = /** @class */ (function () {
     function DateEnv(settings) {
         var timeZone = this.timeZone = settings.timeZone;
@@ -6475,7 +6495,7 @@ exports.DateEnv = DateEnv;
 
 
 /***/ }),
-/* 63 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -6511,7 +6531,7 @@ var FillRenderer = /** @class */ (function () {
         var segs = this.segsByType[type];
         if (segs) {
             if (type === 'bgEvent') {
-                this.context.view.triggerWillRemoveSegs(segs);
+                this.context.view.triggerWillRemoveSegs(segs, false); // isMirror=false
             }
             this.detachSegs(type, segs);
         }
@@ -6601,25 +6621,25 @@ exports.default = FillRenderer;
 
 
 /***/ }),
-/* 64 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var dom_manip_1 = __webpack_require__(3);
 var dom_geom_1 = __webpack_require__(15);
-var PositionCache_1 = __webpack_require__(59);
-var Popover_1 = __webpack_require__(203);
-var DayGridEventRenderer_1 = __webpack_require__(164);
-var DayGridMirrorRenderer_1 = __webpack_require__(204);
-var DayGridFillRenderer_1 = __webpack_require__(205);
+var PositionCache_1 = __webpack_require__(60);
+var Popover_1 = __webpack_require__(204);
+var DayGridEventRenderer_1 = __webpack_require__(165);
+var DayGridMirrorRenderer_1 = __webpack_require__(205);
+var DayGridFillRenderer_1 = __webpack_require__(206);
 var marker_1 = __webpack_require__(4);
 var formatting_1 = __webpack_require__(7);
 var DateComponent_1 = __webpack_require__(22);
-var DayTile_1 = __webpack_require__(206);
+var DayTile_1 = __webpack_require__(207);
 var date_range_1 = __webpack_require__(8);
 var date_rendering_1 = __webpack_require__(21);
-var DayBgRow_1 = __webpack_require__(163);
+var DayBgRow_1 = __webpack_require__(164);
 var memoized_rendering_1 = __webpack_require__(20);
 var DAY_NUM_FORMAT = formatting_1.createFormatter({ day: 'numeric' });
 var WEEK_NUM_FORMAT = formatting_1.createFormatter({ week: 'numeric' });
@@ -6894,7 +6914,7 @@ var DayGrid = /** @class */ (function (_super) {
         if (state) {
             this.eventRenderer.showByHash(state.affectedInstances);
             this.fillRenderer.unrender('highlight');
-            this.mirrorRenderer.unrender();
+            this.mirrorRenderer.unrender(state.segs, { isResizing: true, sourceSeg: state.sourceSeg });
         }
     };
     /* More+ Link Popover
@@ -7100,7 +7120,7 @@ var DayGrid = /** @class */ (function (_super) {
         }
         options = {
             className: 'fc-more-popover ' + theme.getClass('popover'),
-            parentEl: this.el,
+            parentEl: view.el,
             top: dom_geom_1.computeRect(topEl).top,
             autoHide: true,
             content: function (el) {
@@ -7180,7 +7200,7 @@ exports.default = DayGrid;
 
 
 /***/ }),
-/* 65 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -7251,7 +7271,7 @@ exports.default = DaySeries;
 
 
 /***/ }),
-/* 66 */
+/* 67 */
 /***/ (function(module, exports) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -7332,11 +7352,11 @@ exports.default = DayTable;
 
 
 /***/ }),
-/* 67 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var event_store_1 = __webpack_require__(13);
+var event_store_1 = __webpack_require__(14);
 var event_rendering_1 = __webpack_require__(10);
 var date_span_1 = __webpack_require__(46);
 var memoize_1 = __webpack_require__(17);
@@ -7484,13 +7504,13 @@ function computeActiveRange(dateProfile) {
 
 
 /***/ }),
-/* 68 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var DateComponent_1 = __webpack_require__(22);
-var slicing_utils_1 = __webpack_require__(67);
+var slicing_utils_1 = __webpack_require__(68);
 var OffsetTracker_1 = __webpack_require__(51);
 var SimpleDayGrid = /** @class */ (function (_super) {
     tslib_1.__extends(SimpleDayGrid, _super);
@@ -7551,13 +7571,12 @@ exports.DayGridSlicer = DayGridSlicer;
 
 
 /***/ }),
-/* 69 */
+/* 70 */
 /***/ (function(module, exports) {
 
-module.exports = __WEBPACK_EXTERNAL_MODULE_69__;
+module.exports = __WEBPACK_EXTERNAL_MODULE_70__;
 
 /***/ }),
-/* 70 */,
 /* 71 */,
 /* 72 */,
 /* 73 */,
@@ -7628,7 +7647,8 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_69__;
 /* 138 */,
 /* 139 */,
 /* 140 */,
-/* 141 */
+/* 141 */,
+/* 142 */
 /***/ (function(module, exports) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -7670,14 +7690,14 @@ exports.default = EventSourceApi;
 
 
 /***/ }),
-/* 142 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var object_1 = __webpack_require__(12);
 var event_mutation_1 = __webpack_require__(43);
-var event_store_1 = __webpack_require__(13);
+var event_store_1 = __webpack_require__(14);
 function default_1(eventStore, action, eventSources, dateProfile, calendar) {
     switch (action.type) {
         case 'RECEIVE_EVENTS': // raw
@@ -7687,7 +7707,10 @@ function default_1(eventStore, action, eventSources, dateProfile, calendar) {
             dateProfile ? dateProfile.activeRange : null, calendar);
         case 'MERGE_EVENTS': // already parsed and expanded
             return event_store_1.mergeEventStores(eventStore, action.eventStore);
-        case 'SET_DATE_PROFILE':
+        case 'PREV': // TODO: how do we track all actions that affect dateProfile :(
+        case 'NEXT':
+        case 'SET_DATE':
+        case 'SET_VIEW_TYPE':
             if (dateProfile) {
                 return event_store_1.expandRecurring(eventStore, dateProfile.activeRange, calendar);
             }
@@ -7792,12 +7815,12 @@ exports.excludeInstances = excludeInstances;
 
 
 /***/ }),
-/* 143 */
+/* 144 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var event_store_1 = __webpack_require__(13);
+var event_store_1 = __webpack_require__(14);
 var DEF_DEFAULTS = {
     startTime: '09:00',
     endTime: '17:00',
@@ -7838,14 +7861,14 @@ function refineInputs(input) {
 
 
 /***/ }),
-/* 144 */
+/* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var event_store_1 = __webpack_require__(13);
+var event_store_1 = __webpack_require__(14);
 var object_1 = __webpack_require__(12);
 var memoize_1 = __webpack_require__(17);
-var event_ui_1 = __webpack_require__(24);
+var event_ui_1 = __webpack_require__(25);
 var tslib_1 = __webpack_require__(1);
 var EMPTY_EVENT_STORE = event_store_1.createEmptyEventStore(); // for purecomponents. TODO: keep elsewhere
 var Splitter = /** @class */ (function () {
@@ -7865,8 +7888,8 @@ var Splitter = /** @class */ (function () {
         var dateSelections = this.splitDateSelection(props.dateSelection);
         var individualUi = this.splitIndividualUi(props.eventUiBases, defKeys); // the individual *bases*
         var eventStores = this.splitEventStore(props.eventStore, defKeys);
-        var eventDrags = this.splitEventDrag(props.eventDrag, defKeys);
-        var eventResizes = this.splitEventResize(props.eventResize, defKeys);
+        var eventDrags = this.splitEventDrag(props.eventDrag);
+        var eventResizes = this.splitEventResize(props.eventResize);
         var splitProps = {};
         this.eventUiBuilders = object_1.mapHash(keyInfos, function (info, key) {
             return _this.eventUiBuilders[key] || memoize_1.memoize(buildEventUiForKey);
@@ -7942,10 +7965,11 @@ var Splitter = /** @class */ (function () {
         }
         return splitHashes;
     };
-    Splitter.prototype._splitInteraction = function (interaction, defKeys) {
+    Splitter.prototype._splitInteraction = function (interaction) {
         var splitStates = {};
         if (interaction) {
-            var affectedStores_1 = this._splitEventStore(interaction.affectedEvents, defKeys);
+            var affectedStores_1 = this._splitEventStore(interaction.affectedEvents, this._getKeysForEventDefs(interaction.affectedEvents) // can't use cached. might be events from other calendar
+            );
             // can't rely on defKeys because event data is mutated
             var mutatedKeysByDefId = this._getKeysForEventDefs(interaction.mutatedEvents);
             var mutatedStores_1 = this._splitEventStore(interaction.mutatedEvents, mutatedKeysByDefId);
@@ -7990,7 +8014,7 @@ function buildEventUiForKey(allUi, eventUiForKey, individualUi) {
 
 
 /***/ }),
-/* 145 */
+/* 146 */
 /***/ (function(module, exports) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -8025,7 +8049,7 @@ exports.unpromisify = unpromisify;
 
 
 /***/ }),
-/* 146 */
+/* 147 */
 /***/ (function(module, exports) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -8061,12 +8085,12 @@ exports.default = Mixin;
 
 
 /***/ }),
-/* 147 */
+/* 148 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var Theme_1 = __webpack_require__(32);
+var Theme_1 = __webpack_require__(33);
 var StandardTheme = /** @class */ (function (_super) {
     tslib_1.__extends(StandardTheme, _super);
     function StandardTheme() {
@@ -8110,12 +8134,12 @@ StandardTheme.prototype.iconOverridePrefix = 'fc-icon-';
 
 
 /***/ }),
-/* 148 */
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var Theme_1 = __webpack_require__(32);
+var Theme_1 = __webpack_require__(33);
 var JqueryUiTheme = /** @class */ (function (_super) {
     tslib_1.__extends(JqueryUiTheme, _super);
     function JqueryUiTheme() {
@@ -8160,7 +8184,7 @@ JqueryUiTheme.prototype.iconOverridePrefix = 'ui-icon-';
 
 
 /***/ }),
-/* 149 */
+/* 150 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -8269,13 +8293,13 @@ exports.WindowScrollController = WindowScrollController;
 
 
 /***/ }),
-/* 150 */
+/* 151 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var dom_geom_1 = __webpack_require__(15);
-var scroll_controller_1 = __webpack_require__(149);
+var scroll_controller_1 = __webpack_require__(150);
 /*
 Is a cache for a given element's scroll information (all the info that ScrollController stores)
 in addition the "client rectangle" of the element.. the area within the scrollbars.
@@ -8394,13 +8418,13 @@ exports.WindowScrollGeomCache = WindowScrollGeomCache;
 
 
 /***/ }),
-/* 151 */
+/* 152 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var misc_1 = __webpack_require__(2);
-var HitDragging_1 = __webpack_require__(27);
-var FeaturefulElementDragging_1 = __webpack_require__(34);
+var HitDragging_1 = __webpack_require__(28);
+var FeaturefulElementDragging_1 = __webpack_require__(35);
 var tslib_1 = __webpack_require__(1);
 /*
 Tracks when the user selects a portion of time of a component,
@@ -8508,20 +8532,21 @@ function joinHitsIntoSelection(hit0, hit1, dateSelectionTransformers) {
 
 
 /***/ }),
-/* 152 */
+/* 153 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var HitDragging_1 = __webpack_require__(27);
+var HitDragging_1 = __webpack_require__(28);
 var event_mutation_1 = __webpack_require__(43);
-var browser_context_1 = __webpack_require__(60);
+var browser_context_1 = __webpack_require__(61);
 var marker_1 = __webpack_require__(4);
 var dom_manip_1 = __webpack_require__(3);
-var FeaturefulElementDragging_1 = __webpack_require__(34);
-var event_store_1 = __webpack_require__(13);
+var FeaturefulElementDragging_1 = __webpack_require__(35);
+var event_store_1 = __webpack_require__(14);
 var misc_1 = __webpack_require__(2);
 var event_rendering_1 = __webpack_require__(10);
 var EventApi_1 = __webpack_require__(16);
+var tslib_1 = __webpack_require__(1);
 var EventDragging = /** @class */ (function () {
     function EventDragging(component) {
         var _this = this;
@@ -8660,6 +8685,7 @@ var EventDragging = /** @class */ (function () {
                 var eventApi = new EventApi_1.default(initialCalendar_1, eventDef, eventInstance);
                 var relevantEvents_1 = _this.relevantEvents;
                 var mutatedRelevantEvents = _this.mutatedRelevantEvents;
+                var finalHit = _this.hitDragging.finalHit;
                 _this.clearDrag(); // must happen after revert animation
                 initialCalendar_1.publiclyTrigger('eventDragStop', [
                     {
@@ -8676,23 +8702,27 @@ var EventDragging = /** @class */ (function () {
                             type: 'MERGE_EVENTS',
                             eventStore: mutatedRelevantEvents
                         });
-                        initialCalendar_1.publiclyTrigger('eventDrop', [
-                            {
-                                el: ev.subjectEl,
-                                delta: _this.validMutation.startDelta,
-                                prevEvent: eventApi,
-                                event: new EventApi_1.default(// the data AFTER the mutation
-                                initialCalendar_1, mutatedRelevantEvents.defs[eventDef.defId], eventInstance ? mutatedRelevantEvents.instances[eventInstance.instanceId] : null),
-                                revert: function () {
-                                    initialCalendar_1.dispatch({
-                                        type: 'MERGE_EVENTS',
-                                        eventStore: relevantEvents_1
-                                    });
-                                },
-                                jsEvent: ev.origEvent,
-                                view: initialView
-                            }
-                        ]);
+                        var eventDropArg = {};
+                        for (var _i = 0, _a = initialCalendar_1.pluginSystem.hooks.eventDropTransformers; _i < _a.length; _i++) {
+                            var transformer = _a[_i];
+                            tslib_1.__assign(eventDropArg, transformer(_this.validMutation, initialCalendar_1));
+                        }
+                        tslib_1.__assign(eventDropArg, {
+                            el: ev.subjectEl,
+                            delta: _this.validMutation.startDelta,
+                            oldEvent: eventApi,
+                            event: new EventApi_1.default(// the data AFTER the mutation
+                            initialCalendar_1, mutatedRelevantEvents.defs[eventDef.defId], eventInstance ? mutatedRelevantEvents.instances[eventInstance.instanceId] : null),
+                            revert: function () {
+                                initialCalendar_1.dispatch({
+                                    type: 'MERGE_EVENTS',
+                                    eventStore: relevantEvents_1
+                                });
+                            },
+                            jsEvent: ev.origEvent,
+                            view: initialView
+                        });
+                        initialCalendar_1.publiclyTrigger('eventDrop', [eventDropArg]);
                         // dropped in different calendar
                     }
                     else if (receivingCalendar) {
@@ -8717,11 +8747,17 @@ var EventDragging = /** @class */ (function () {
                                 eventInstanceId: eventInstance.instanceId
                             });
                         }
+                        var dropArg = receivingCalendar.buildDatePointApi(finalHit.dateSpan);
+                        dropArg.draggedEl = ev.subjectEl;
+                        dropArg.jsEvent = ev.origEvent;
+                        dropArg.view = finalHit.component; // ?
+                        receivingCalendar.publiclyTrigger('drop', [dropArg]);
                         receivingCalendar.publiclyTrigger('eventReceive', [
                             {
                                 draggedEl: ev.subjectEl,
-                                event: new EventApi_1.default(receivingCalendar, eventDef, eventInstance),
-                                view: _this.hitDragging.finalHit.component
+                                event: new EventApi_1.default(// the data AFTER the mutation
+                                receivingCalendar, mutatedRelevantEvents.defs[eventDef.defId], mutatedRelevantEvents.instances[eventInstance.instanceId]),
+                                view: finalHit.component
                             }
                         ]);
                     }
@@ -8842,37 +8878,37 @@ function getComponentTouchDelay(component) {
 
 
 /***/ }),
-/* 153 */
+/* 154 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var dom_manip_1 = __webpack_require__(3);
-var dom_event_1 = __webpack_require__(23);
+var dom_event_1 = __webpack_require__(24);
 var misc_1 = __webpack_require__(2);
-var EmitterMixin_1 = __webpack_require__(26);
-var OptionsManager_1 = __webpack_require__(195);
-var ThemeRegistry_1 = __webpack_require__(58);
+var EmitterMixin_1 = __webpack_require__(27);
+var OptionsManager_1 = __webpack_require__(196);
+var ThemeRegistry_1 = __webpack_require__(59);
 var locale_1 = __webpack_require__(47);
-var env_1 = __webpack_require__(62);
+var env_1 = __webpack_require__(63);
 var marker_1 = __webpack_require__(4);
 var formatting_1 = __webpack_require__(7);
 var duration_1 = __webpack_require__(9);
-var main_1 = __webpack_require__(197);
+var main_1 = __webpack_require__(198);
 var date_span_1 = __webpack_require__(46);
 var memoize_1 = __webpack_require__(17);
 var object_1 = __webpack_require__(12);
-var event_source_1 = __webpack_require__(28);
-var event_1 = __webpack_require__(25);
-var EventSourceApi_1 = __webpack_require__(141);
+var event_source_1 = __webpack_require__(29);
+var event_1 = __webpack_require__(26);
+var EventSourceApi_1 = __webpack_require__(142);
 var EventApi_1 = __webpack_require__(16);
-var event_store_1 = __webpack_require__(13);
-var event_ui_1 = __webpack_require__(24);
+var event_store_1 = __webpack_require__(14);
+var event_ui_1 = __webpack_require__(25);
 var PointerDragging_1 = __webpack_require__(45);
-var EventDragging_1 = __webpack_require__(152);
-var view_spec_1 = __webpack_require__(156);
-var plugin_system_1 = __webpack_require__(36);
-var CalendarComponent_1 = __webpack_require__(158);
+var EventDragging_1 = __webpack_require__(153);
+var view_spec_1 = __webpack_require__(157);
+var plugin_system_1 = __webpack_require__(37);
+var CalendarComponent_1 = __webpack_require__(159);
 var tslib_2 = __webpack_require__(1);
 var Calendar = /** @class */ (function () {
     function Calendar(el, overrides) {
@@ -9020,8 +9056,7 @@ var Calendar = /** @class */ (function () {
             _this.dispatch({ type: 'ADD_EVENT_SOURCES', sources: sources });
             _this.dispatch({
                 type: 'SET_VIEW_TYPE',
-                viewType: _this.opt('defaultView'),
-                dateMarker: _this.getInitialDate()
+                viewType: _this.opt('defaultView')
             });
         });
     };
@@ -9030,6 +9065,7 @@ var Calendar = /** @class */ (function () {
             viewType: null,
             loadingLevel: 0,
             eventSourceLoadingLevel: 0,
+            currentDate: this.getInitialDate(),
             dateProfile: null,
             eventSources: {},
             eventStore: event_store_1.createEmptyEventStore(),
@@ -9365,30 +9401,24 @@ var Calendar = /** @class */ (function () {
     };
     Calendar.prototype.prev = function () {
         this.unselect();
-        this.dispatch({
-            type: 'SET_DATE_PROFILE',
-            dateProfile: this.dateProfileGenerators[this.state.viewType].buildPrev(this.state.dateProfile)
-        });
+        this.dispatch({ type: 'PREV' });
     };
     Calendar.prototype.next = function () {
         this.unselect();
-        this.dispatch({
-            type: 'SET_DATE_PROFILE',
-            dateProfile: this.dateProfileGenerators[this.state.viewType].buildNext(this.state.dateProfile)
-        });
+        this.dispatch({ type: 'NEXT' });
     };
     Calendar.prototype.prevYear = function () {
         this.unselect();
         this.dispatch({
             type: 'SET_DATE',
-            dateMarker: this.dateEnv.addYears(this.state.dateProfile.currentDate, -1)
+            dateMarker: this.dateEnv.addYears(this.state.currentDate, -1)
         });
     };
     Calendar.prototype.nextYear = function () {
         this.unselect();
         this.dispatch({
             type: 'SET_DATE',
-            dateMarker: this.dateEnv.addYears(this.state.dateProfile.currentDate, 1)
+            dateMarker: this.dateEnv.addYears(this.state.currentDate, 1)
         });
     };
     Calendar.prototype.today = function () {
@@ -9411,13 +9441,13 @@ var Calendar = /** @class */ (function () {
             this.unselect();
             this.dispatch({
                 type: 'SET_DATE',
-                dateMarker: this.dateEnv.add(this.state.dateProfile.currentDate, delta)
+                dateMarker: this.dateEnv.add(this.state.currentDate, delta)
             });
         }
     };
     // for external API
     Calendar.prototype.getDate = function () {
-        return this.dateEnv.toDate(this.state.dateProfile.currentDate);
+        return this.dateEnv.toDate(this.state.currentDate);
     };
     // Date Formatting Utils
     // -----------------------------------------------------------------------------------------------------------------
@@ -9579,14 +9609,18 @@ var Calendar = /** @class */ (function () {
             return eventInput;
         }
         var sourceId;
-        if (sourceInput && sourceInput.sourceId !== undefined) { // can accept a source object
-            sourceId = sourceInput.sourceId;
+        if (sourceInput instanceof EventSourceApi_1.default) {
+            sourceId = sourceInput.internalEventSource.sourceId;
         }
-        else if (typeof sourceInput === 'string') { // can accept a sourceId string
-            sourceId = sourceInput;
-        }
-        else {
-            sourceId = '';
+        else if (sourceInput != null) {
+            var sourceApi = this.getEventSourceById(sourceInput); // TODO: use an internal function
+            if (!sourceApi) {
+                console.warn('Could not find an event source with ID "' + sourceInput + '"'); // TODO: test
+                return null;
+            }
+            else {
+                sourceId = sourceApi.internalEventSource.sourceId;
+            }
         }
         var tuple = event_1.parseEvent(eventInput, sourceId, this);
         if (tuple) {
@@ -9728,7 +9762,7 @@ function buildEventUiBases(eventDefs, eventUiSingleBase, eventUiBySource) {
 
 
 /***/ }),
-/* 154 */
+/* 155 */
 /***/ (function(module, exports) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -9755,7 +9789,7 @@ exports.createNamedTimeZoneImpl = createNamedTimeZoneImpl;
 
 
 /***/ }),
-/* 155 */
+/* 156 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -9798,16 +9832,16 @@ exports.parse = parse;
 
 
 /***/ }),
-/* 156 */
+/* 157 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var view_def_1 = __webpack_require__(157);
+var view_def_1 = __webpack_require__(158);
 var duration_1 = __webpack_require__(9);
 var object_1 = __webpack_require__(12);
-var options_1 = __webpack_require__(35);
-var view_config_1 = __webpack_require__(199);
+var options_1 = __webpack_require__(36);
+var view_config_1 = __webpack_require__(200);
 function buildViewSpecs(defaultInputs, optionsManager, transformers) {
     var defaultConfigs = view_config_1.parseViewConfigs(defaultInputs);
     var overrideConfigs = view_config_1.parseViewConfigs(optionsManager.overrides.views);
@@ -9875,7 +9909,7 @@ function buildViewSpec(viewDef, overrideConfigs, optionsManager) {
 
 
 /***/ }),
-/* 157 */
+/* 158 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -9944,16 +9978,16 @@ function findViewNameBySubclass(viewSubclass, configs) {
 
 
 /***/ }),
-/* 158 */
+/* 159 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var Component_1 = __webpack_require__(33);
-var Toolbar_1 = __webpack_require__(200);
+var Component_1 = __webpack_require__(34);
+var Toolbar_1 = __webpack_require__(201);
 var dom_manip_1 = __webpack_require__(3);
 var date_range_1 = __webpack_require__(8);
-var business_hours_1 = __webpack_require__(143);
+var business_hours_1 = __webpack_require__(144);
 var memoize_1 = __webpack_require__(17);
 var dom_geom_1 = __webpack_require__(15);
 var formatting_1 = __webpack_require__(7);
@@ -10203,17 +10237,17 @@ function buildViewPropTransformers(theClasses) {
 
 
 /***/ }),
-/* 159 */
+/* 160 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var AbstractAgendaView_1 = __webpack_require__(160);
-var DayHeader_1 = __webpack_require__(166);
-var DaySeries_1 = __webpack_require__(65);
-var DayTable_1 = __webpack_require__(66);
-var SimpleTimeGrid_1 = __webpack_require__(168);
-var SimpleDayGrid_1 = __webpack_require__(68);
+var AbstractAgendaView_1 = __webpack_require__(161);
+var DayHeader_1 = __webpack_require__(167);
+var DaySeries_1 = __webpack_require__(66);
+var DayTable_1 = __webpack_require__(67);
+var SimpleTimeGrid_1 = __webpack_require__(169);
+var SimpleDayGrid_1 = __webpack_require__(69);
 var memoize_1 = __webpack_require__(17);
 var AgendaView = /** @class */ (function (_super) {
     tslib_1.__extends(AgendaView, _super);
@@ -10273,7 +10307,7 @@ exports.buildDayTable = buildDayTable;
 
 
 /***/ }),
-/* 160 */
+/* 161 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -10283,13 +10317,13 @@ var dom_manip_1 = __webpack_require__(3);
 var misc_1 = __webpack_require__(2);
 var ScrollComponent_1 = __webpack_require__(44);
 var View_1 = __webpack_require__(49);
-var TimeGrid_1 = __webpack_require__(161);
-var DayGrid_1 = __webpack_require__(64);
+var TimeGrid_1 = __webpack_require__(162);
+var DayGrid_1 = __webpack_require__(65);
 var duration_1 = __webpack_require__(9);
 var formatting_1 = __webpack_require__(7);
 var date_rendering_1 = __webpack_require__(21);
 var marker_1 = __webpack_require__(4);
-var AllDaySplitter_1 = __webpack_require__(207);
+var AllDaySplitter_1 = __webpack_require__(208);
 var AGENDA_ALL_DAY_EVENT_LIMIT = 5;
 var WEEK_HEADER_FORMAT = formatting_1.createFormatter({ week: 'short' });
 /* An abstract class for all agenda-related views. Displays one more columns with time slots running vertically.
@@ -10533,22 +10567,22 @@ AgendaView.prototype.usesMinMaxTime = true; // indicates that minTime/maxTime af
 
 
 /***/ }),
-/* 161 */
+/* 162 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var html_1 = __webpack_require__(11);
 var dom_manip_1 = __webpack_require__(3);
-var PositionCache_1 = __webpack_require__(59);
-var TimeGridEventRenderer_1 = __webpack_require__(162);
-var TimeGridMirrorRenderer_1 = __webpack_require__(201);
-var TimeGridFillRenderer_1 = __webpack_require__(202);
+var PositionCache_1 = __webpack_require__(60);
+var TimeGridEventRenderer_1 = __webpack_require__(163);
+var TimeGridMirrorRenderer_1 = __webpack_require__(202);
+var TimeGridFillRenderer_1 = __webpack_require__(203);
 var duration_1 = __webpack_require__(9);
 var marker_1 = __webpack_require__(4);
 var formatting_1 = __webpack_require__(7);
 var DateComponent_1 = __webpack_require__(22);
-var DayBgRow_1 = __webpack_require__(163);
+var DayBgRow_1 = __webpack_require__(164);
 var memoized_rendering_1 = __webpack_require__(20);
 /* A component that renders one or more columns of vertical time slots
 ----------------------------------------------------------------------------------------------------------------------*/
@@ -10974,7 +11008,7 @@ var TimeGrid = /** @class */ (function (_super) {
     TimeGrid.prototype._unrenderEventDrag = function (state) {
         if (state) {
             this.eventRenderer.showByHash(state.affectedInstances);
-            this.mirrorRenderer.unrender();
+            this.mirrorRenderer.unrender(state.segs, { isDragging: true, sourceSeg: state.sourceSeg });
             this.fillRenderer.unrender('highlight');
         }
     };
@@ -10989,7 +11023,7 @@ var TimeGrid = /** @class */ (function (_super) {
     TimeGrid.prototype._unrenderEventResize = function (state) {
         if (state) {
             this.eventRenderer.showByHash(state.affectedInstances);
-            this.mirrorRenderer.unrender();
+            this.mirrorRenderer.unrender(state.segs, { isResizing: true, sourceSeg: state.sourceSeg });
         }
     };
     /* Selection
@@ -11005,8 +11039,8 @@ var TimeGrid = /** @class */ (function (_super) {
             }
         }
     };
-    TimeGrid.prototype._unrenderDateSelection = function () {
-        this.mirrorRenderer.unrender();
+    TimeGrid.prototype._unrenderDateSelection = function (segs) {
+        this.mirrorRenderer.unrender(segs, { isSelecting: true });
         this.fillRenderer.unrender('highlight');
     };
     return TimeGrid;
@@ -11015,7 +11049,7 @@ exports.default = TimeGrid;
 
 
 /***/ }),
-/* 162 */
+/* 163 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -11225,14 +11259,13 @@ var TimeGridEventRenderer = /** @class */ (function (_super) {
     // Given foreground event segments that have already had their position coordinates computed,
     // assigns position-related CSS values to their elements.
     TimeGridEventRenderer.prototype.assignSegCss = function (segs) {
-        var i;
-        var seg;
-        for (i = 0; i < segs.length; i++) {
-            seg = segs[i];
+        for (var _i = 0, segs_1 = segs; _i < segs_1.length; _i++) {
+            var seg = segs_1[_i];
             dom_manip_1.applyStyle(seg.el, this.generateSegCss(seg));
-            // if the height is short, add a className for alternate styling
-            if (seg.bottom - seg.top < 30) {
-                seg.el.classList.add('fc-short');
+            // if the event is short that the title will be cut off,
+            // attach a className that condenses the title into the time area.
+            if (seg.eventRange.def.title && seg.bottom - seg.top < 30) {
+                seg.el.classList.add('fc-short'); // TODO: "condensed" is a better name
             }
         }
     };
@@ -11352,7 +11385,7 @@ function buildTimeGridSegCompareObj(seg) {
 
 
 /***/ }),
-/* 163 */
+/* 164 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -11399,13 +11432,13 @@ function renderCellHtml(date, dateProfile, context, otherAttrs) {
 
 
 /***/ }),
-/* 164 */
+/* 165 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var dom_manip_1 = __webpack_require__(3);
-var SimpleDayGridEventRenderer_1 = __webpack_require__(165);
+var SimpleDayGridEventRenderer_1 = __webpack_require__(166);
 /* Event-rendering methods for the DayGrid class
 ----------------------------------------------------------------------------------------------------------------------*/
 var DayGridEventRenderer = /** @class */ (function (_super) {
@@ -11609,7 +11642,7 @@ function compareDaySegCols(a, b) {
 
 
 /***/ }),
-/* 165 */
+/* 166 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -11691,15 +11724,15 @@ exports.default = SimpleDayGridEventRenderer;
 
 
 /***/ }),
-/* 166 */
+/* 167 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var Component_1 = __webpack_require__(33);
+var Component_1 = __webpack_require__(34);
 var dom_manip_1 = __webpack_require__(3);
 var formatting_1 = __webpack_require__(7);
-var table_utils_1 = __webpack_require__(167);
+var table_utils_1 = __webpack_require__(168);
 var DayHeader = /** @class */ (function (_super) {
     tslib_1.__extends(DayHeader, _super);
     function DayHeader(context, parentEl) {
@@ -11739,7 +11772,7 @@ exports.default = DayHeader;
 
 
 /***/ }),
-/* 167 */
+/* 168 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -11812,7 +11845,7 @@ exports.renderDateCell = renderDateCell;
 
 
 /***/ }),
-/* 168 */
+/* 169 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -11820,7 +11853,7 @@ var tslib_1 = __webpack_require__(1);
 var DateComponent_1 = __webpack_require__(22);
 var memoize_1 = __webpack_require__(17);
 var date_range_1 = __webpack_require__(8);
-var slicing_utils_1 = __webpack_require__(67);
+var slicing_utils_1 = __webpack_require__(68);
 var OffsetTracker_1 = __webpack_require__(51);
 var SimpleTimeGrid = /** @class */ (function (_super) {
     tslib_1.__extends(SimpleTimeGrid, _super);
@@ -11910,7 +11943,7 @@ exports.TimeGridSlicer = TimeGridSlicer;
 
 
 /***/ }),
-/* 169 */
+/* 170 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -11921,9 +11954,9 @@ var misc_1 = __webpack_require__(2);
 var formatting_1 = __webpack_require__(7);
 var ScrollComponent_1 = __webpack_require__(44);
 var View_1 = __webpack_require__(49);
-var BasicViewDateProfileGenerator_1 = __webpack_require__(208);
+var BasicViewDateProfileGenerator_1 = __webpack_require__(209);
 var date_rendering_1 = __webpack_require__(21);
-var DayGrid_1 = __webpack_require__(64);
+var DayGrid_1 = __webpack_require__(65);
 var WEEK_NUM_FORMAT = formatting_1.createFormatter({ week: 'numeric' });
 /* An abstract class for the "basic" views, as well as month view. Renders one or more rows of day cells.
 ----------------------------------------------------------------------------------------------------------------------*/
@@ -12153,17 +12186,17 @@ BasicView.prototype.dateProfileGeneratorClass = BasicViewDateProfileGenerator_1.
 
 
 /***/ }),
-/* 170 */
+/* 171 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var AbstractBasicView_1 = __webpack_require__(169);
-var DayHeader_1 = __webpack_require__(166);
-var SimpleDayGrid_1 = __webpack_require__(68);
+var AbstractBasicView_1 = __webpack_require__(170);
+var DayHeader_1 = __webpack_require__(167);
+var SimpleDayGrid_1 = __webpack_require__(69);
 var memoize_1 = __webpack_require__(17);
-var DaySeries_1 = __webpack_require__(65);
-var DayTable_1 = __webpack_require__(66);
+var DaySeries_1 = __webpack_require__(66);
+var DayTable_1 = __webpack_require__(67);
 var BasicView = /** @class */ (function (_super) {
     tslib_1.__extends(BasicView, _super);
     function BasicView(_context, viewSpec, dateProfileGenerator, parentEl) {
@@ -12220,7 +12253,7 @@ exports.buildDayTable = buildDayTable;
 
 
 /***/ }),
-/* 171 */
+/* 172 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -12230,7 +12263,7 @@ var html_1 = __webpack_require__(11);
 var misc_1 = __webpack_require__(2);
 var View_1 = __webpack_require__(49);
 var ScrollComponent_1 = __webpack_require__(44);
-var ListEventRenderer_1 = __webpack_require__(209);
+var ListEventRenderer_1 = __webpack_require__(210);
 var marker_1 = __webpack_require__(4);
 var formatting_1 = __webpack_require__(7);
 var date_range_1 = __webpack_require__(8);
@@ -12419,17 +12452,17 @@ function computeDateVars(dateProfile) {
 
 
 /***/ }),
-/* 172 */
+/* 173 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var HitDragging_1 = __webpack_require__(27);
-var browser_context_1 = __webpack_require__(60);
-var event_1 = __webpack_require__(25);
-var event_store_1 = __webpack_require__(13);
-var externalHooks = __webpack_require__(55);
-var drag_meta_1 = __webpack_require__(211);
+var HitDragging_1 = __webpack_require__(28);
+var browser_context_1 = __webpack_require__(61);
+var event_1 = __webpack_require__(26);
+var event_store_1 = __webpack_require__(14);
+var externalHooks = __webpack_require__(56);
+var drag_meta_1 = __webpack_require__(212);
 var EventApi_1 = __webpack_require__(16);
 var dom_manip_1 = __webpack_require__(3);
 var misc_1 = __webpack_require__(2);
@@ -12608,7 +12641,6 @@ function getEmbeddedElData(el, name) {
 
 
 /***/ }),
-/* 173 */,
 /* 174 */,
 /* 175 */,
 /* 176 */,
@@ -12619,26 +12651,27 @@ function getEmbeddedElData(el, name) {
 /* 181 */,
 /* 182 */,
 /* 183 */,
-/* 184 */
+/* 184 */,
+/* 185 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var exportHooks = __webpack_require__(55);
+var exportHooks = __webpack_require__(56);
 // for intentional side-effects
-__webpack_require__(217);
-__webpack_require__(220);
+__webpack_require__(218);
 __webpack_require__(221);
 __webpack_require__(222);
 __webpack_require__(223);
-var config_1 = __webpack_require__(224);
-var config_2 = __webpack_require__(225);
-var config_3 = __webpack_require__(226);
-var Calendar_1 = __webpack_require__(153);
+__webpack_require__(224);
+var config_1 = __webpack_require__(225);
+var config_2 = __webpack_require__(226);
+var config_3 = __webpack_require__(227);
+var Calendar_1 = __webpack_require__(154);
 Calendar_1.default.defaultPlugins.push(config_1.default, config_2.default, config_3.default);
 module.exports = exportHooks;
 
 
 /***/ }),
-/* 185 */
+/* 186 */
 /***/ (function(module, exports) {
 
 /*
@@ -12649,7 +12682,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 
 /***/ }),
-/* 186 */
+/* 187 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -12692,7 +12725,7 @@ exports.sanitizeScrollbarWidth = sanitizeScrollbarWidth;
 
 
 /***/ }),
-/* 187 */
+/* 188 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -12978,7 +13011,7 @@ function findCommonInsertion(full0, partial0, full1, partial1) {
 
 
 /***/ }),
-/* 188 */
+/* 189 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -12999,12 +13032,12 @@ exports.FuncFormatter = FuncFormatter;
 
 
 /***/ }),
-/* 189 */
+/* 190 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var FeaturefulElementDragging_1 = __webpack_require__(34);
-var HitDragging_1 = __webpack_require__(27);
+var FeaturefulElementDragging_1 = __webpack_require__(35);
+var HitDragging_1 = __webpack_require__(28);
 /*
 Monitors when the user clicks on a specific date/time of a component.
 A pointerdown+pointerup on the same "hit" constitutes a click.
@@ -13045,12 +13078,12 @@ exports.default = DateClicking;
 
 
 /***/ }),
-/* 190 */
+/* 191 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var dom_manip_1 = __webpack_require__(3);
-var dom_event_1 = __webpack_require__(23);
+var dom_event_1 = __webpack_require__(24);
 /*
 An effect in which an element follows the movement of a pointer across the screen.
 The moving element is a clone of some other element.
@@ -13180,11 +13213,11 @@ exports.default = ElementMirror;
 
 
 /***/ }),
-/* 191 */
+/* 192 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var scroll_geom_cache_1 = __webpack_require__(150);
+var scroll_geom_cache_1 = __webpack_require__(151);
 // If available we are using native "performance" API instead of "Date"
 // Read more about it on MDN:
 // https://developer.mozilla.org/en-US/docs/Web/API/Performance
@@ -13364,11 +13397,11 @@ exports.default = AutoScroller;
 
 
 /***/ }),
-/* 192 */
+/* 193 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var dom_event_1 = __webpack_require__(23);
+var dom_event_1 = __webpack_require__(24);
 var EventApi_1 = __webpack_require__(16);
 var dom_manip_1 = __webpack_require__(3);
 var event_rendering_1 = __webpack_require__(10);
@@ -13381,7 +13414,8 @@ var EventClicking = /** @class */ (function () {
         this.handleSegClick = function (ev, segEl) {
             var component = _this.component;
             var seg = event_rendering_1.getElSeg(segEl);
-            if (component.isValidSegDownEl(ev.target)) {
+            if (seg && // might be the <div> surrounding the more link
+                component.isValidSegDownEl(ev.target)) {
                 // our way to simulate a link click for elements that can't be <a> tags
                 // grab before trigger fired in case trigger trashes DOM thru rerendering
                 var hasUrlContainer = dom_manip_1.elementClosest(ev.target, '.fc-has-url');
@@ -13408,11 +13442,11 @@ exports.default = EventClicking;
 
 
 /***/ }),
-/* 193 */
+/* 194 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var dom_event_1 = __webpack_require__(23);
+var dom_event_1 = __webpack_require__(24);
 var EventApi_1 = __webpack_require__(16);
 var event_rendering_1 = __webpack_require__(10);
 /*
@@ -13470,15 +13504,15 @@ exports.default = EventHovering;
 
 
 /***/ }),
-/* 194 */
+/* 195 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var HitDragging_1 = __webpack_require__(27);
+var HitDragging_1 = __webpack_require__(28);
 var event_mutation_1 = __webpack_require__(43);
 var dom_manip_1 = __webpack_require__(3);
-var FeaturefulElementDragging_1 = __webpack_require__(34);
-var event_store_1 = __webpack_require__(13);
+var FeaturefulElementDragging_1 = __webpack_require__(35);
+var event_store_1 = __webpack_require__(14);
 var misc_1 = __webpack_require__(2);
 var EventApi_1 = __webpack_require__(16);
 var event_rendering_1 = __webpack_require__(10);
@@ -13494,9 +13528,10 @@ var EventDragging = /** @class */ (function () {
         this.validMutation = null;
         this.mutatedRelevantEvents = null;
         this.handlePointerDown = function (ev) {
+            var component = _this.component;
             var seg = _this.querySeg(ev);
             var eventRange = _this.eventRange = seg.eventRange;
-            _this.dragging.minDistance = 5; // TODO: make this a constant
+            _this.dragging.minDistance = component.opt('eventDragMinDistance');
             // if touch, need to be working with a selected event
             _this.dragging.setIgnoreMove(!_this.component.isValidSegDownEl(ev.origEvent.target) ||
                 (ev.isTouch && _this.component.props.eventSelection !== eventRange.instance.instanceId));
@@ -13668,13 +13703,13 @@ function computeMutation(hit0, hit1, isFromStart, instanceRange, transforms) {
 
 
 /***/ }),
-/* 195 */
+/* 196 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var misc_1 = __webpack_require__(2);
-var options_1 = __webpack_require__(35);
+var options_1 = __webpack_require__(36);
 var locale_1 = __webpack_require__(47);
 var OptionsManager = /** @class */ (function () {
     function OptionsManager(overrides) {
@@ -13715,7 +13750,7 @@ exports.default = OptionsManager;
 
 
 /***/ }),
-/* 196 */
+/* 197 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -13753,21 +13788,21 @@ registerCalendarSystem('gregory', GregorianCalendarSystem);
 
 
 /***/ }),
-/* 197 */
+/* 198 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var eventSources_1 = __webpack_require__(198);
-var eventStore_1 = __webpack_require__(142);
+var eventSources_1 = __webpack_require__(199);
+var eventStore_1 = __webpack_require__(143);
 var DateProfileGenerator_1 = __webpack_require__(48);
+var date_range_1 = __webpack_require__(8);
 function default_1(state, action, calendar) {
     var viewType = reduceViewType(state.viewType, action);
-    var dateProfile = reduceDateProfile(state.dateProfile, action, viewType, calendar);
+    var dateProfile = reduceDateProfile(state.dateProfile, action, state.currentDate, viewType, calendar);
     var eventSources = eventSources_1.default(state.eventSources, action, dateProfile, calendar);
     var nextState = tslib_1.__assign({}, state, { viewType: viewType,
-        dateProfile: dateProfile,
-        eventSources: eventSources, eventStore: eventStore_1.default(state.eventStore, action, eventSources, dateProfile, calendar), dateSelection: reduceDateSelection(state.dateSelection, action, calendar), eventSelection: reduceSelectedEvent(state.eventSelection, action), eventDrag: reduceEventDrag(state.eventDrag, action, eventSources, calendar), eventResize: reduceEventResize(state.eventResize, action, eventSources, calendar), eventSourceLoadingLevel: computeLoadingLevel(eventSources), loadingLevel: computeLoadingLevel(eventSources) });
+        dateProfile: dateProfile, currentDate: reduceCurrentDate(state.currentDate, action, dateProfile), eventSources: eventSources, eventStore: eventStore_1.default(state.eventStore, action, eventSources, dateProfile, calendar), dateSelection: reduceDateSelection(state.dateSelection, action, calendar), eventSelection: reduceSelectedEvent(state.eventSelection, action), eventDrag: reduceEventDrag(state.eventDrag, action, eventSources, calendar), eventResize: reduceEventResize(state.eventResize, action, eventSources, calendar), eventSourceLoadingLevel: computeLoadingLevel(eventSources), loadingLevel: computeLoadingLevel(eventSources) });
     for (var _i = 0, _a = calendar.pluginSystem.hooks.reducers; _i < _a.length; _i++) {
         var reducerFunc = _a[_i];
         nextState = reducerFunc(nextState, action, calendar);
@@ -13784,16 +13819,57 @@ function reduceViewType(currentViewType, action) {
             return currentViewType;
     }
 }
-function reduceDateProfile(currentDateProfile, action, viewType, calendar) {
+function reduceDateProfile(currentDateProfile, action, currentDate, viewType, calendar) {
+    var newDateProfile;
     switch (action.type) {
-        case 'SET_DATE_PROFILE':
-            return protectSameDateProfile(action.dateProfile, currentDateProfile);
+        case 'PREV':
+            newDateProfile = calendar.dateProfileGenerators[viewType].buildPrev(currentDateProfile);
+            break;
+        case 'NEXT':
+            newDateProfile = calendar.dateProfileGenerators[viewType].buildNext(currentDateProfile);
+            break;
+        case 'SET_DATE':
+            if (!currentDateProfile.activeRange ||
+                !date_range_1.rangeContainsMarker(currentDateProfile.activeRange, action.dateMarker)) {
+                newDateProfile = calendar.dateProfileGenerators[viewType].build(action.dateMarker, undefined, true // forceToValid
+                );
+            }
+            break;
+        case 'SET_VIEW_TYPE':
+            newDateProfile = calendar.dateProfileGenerators[viewType].build(action.dateMarker || currentDate, undefined, true // forceToValid
+            );
+            break;
+    }
+    if (newDateProfile &&
+        newDateProfile.isValid &&
+        !(currentDateProfile && DateProfileGenerator_1.isDateProfilesEqual(currentDateProfile, newDateProfile))) {
+        return newDateProfile;
+    }
+    else {
+        return currentDateProfile;
+    }
+}
+function reduceCurrentDate(currentDate, action, dateProfile) {
+    switch (action.type) {
+        case 'PREV':
+        case 'NEXT':
+            if (!date_range_1.rangeContainsMarker(dateProfile.currentRange, currentDate)) {
+                return dateProfile.currentRange.start;
+            }
+            else {
+                return currentDate;
+            }
         case 'SET_DATE':
         case 'SET_VIEW_TYPE':
-            return protectSameDateProfile(calendar.dateProfileGenerators[viewType].build(action.dateMarker || currentDateProfile.currentDate, undefined, true // forceToValid=true
-            ), currentDateProfile);
+            var newDate = action.dateMarker || currentDate;
+            if (dateProfile.activeRange && !date_range_1.rangeContainsMarker(dateProfile.activeRange, newDate)) {
+                return dateProfile.currentRange.start;
+            }
+            else {
+                return newDate;
+            }
         default:
-            return currentDateProfile;
+            return currentDate;
     }
 }
 function reduceDateSelection(currentSelection, action, calendar) {
@@ -13848,12 +13924,6 @@ function reduceEventResize(currentResize, action, sources, calendar) {
             return currentResize;
     }
 }
-function protectSameDateProfile(newDateProfile, oldDateProfile) {
-    if (newDateProfile && oldDateProfile && DateProfileGenerator_1.isDateProfilesEqual(newDateProfile, oldDateProfile)) {
-        return oldDateProfile;
-    }
-    return newDateProfile;
-}
 function computeLoadingLevel(eventSources) {
     var cnt = 0;
     for (var sourceId in eventSources) {
@@ -13866,12 +13936,12 @@ function computeLoadingLevel(eventSources) {
 
 
 /***/ }),
-/* 198 */
+/* 199 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var event_source_1 = __webpack_require__(28);
+var event_source_1 = __webpack_require__(29);
 var object_1 = __webpack_require__(12);
 var misc_1 = __webpack_require__(2);
 function default_1(eventSources, action, dateProfile, calendar) {
@@ -13880,9 +13950,10 @@ function default_1(eventSources, action, dateProfile, calendar) {
             return addSources(eventSources, action.sources, dateProfile ? dateProfile.activeRange : null, calendar);
         case 'REMOVE_EVENT_SOURCE':
             return removeSource(eventSources, action.sourceId);
-        case 'SET_VIEW_TYPE': // TODO: how do we track all actions that affect dateProfile :(
+        case 'PREV': // TODO: how do we track all actions that affect dateProfile :(
+        case 'NEXT':
         case 'SET_DATE':
-        case 'SET_DATE_PROFILE':
+        case 'SET_VIEW_TYPE':
             if (dateProfile) {
                 return fetchDirtySources(eventSources, dateProfile.activeRange, calendar);
             }
@@ -14012,7 +14083,7 @@ function excludeStaticSources(eventSources) {
 
 
 /***/ }),
-/* 199 */
+/* 200 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -14041,14 +14112,14 @@ function parseViewConfig(input) {
 
 
 /***/ }),
-/* 200 */
+/* 201 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var html_1 = __webpack_require__(11);
 var dom_manip_1 = __webpack_require__(3);
-var Component_1 = __webpack_require__(33);
+var Component_1 = __webpack_require__(34);
 var memoized_rendering_1 = __webpack_require__(20);
 var Toolbar = /** @class */ (function (_super) {
     tslib_1.__extends(Toolbar, _super);
@@ -14288,12 +14359,12 @@ exports.default = Toolbar;
 
 
 /***/ }),
-/* 201 */
+/* 202 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var TimeGridEventRenderer_1 = __webpack_require__(162);
+var TimeGridEventRenderer_1 = __webpack_require__(163);
 var TimeGridMirrorRenderer = /** @class */ (function (_super) {
     tslib_1.__extends(TimeGridMirrorRenderer, _super);
     function TimeGridMirrorRenderer() {
@@ -14322,12 +14393,12 @@ exports.default = TimeGridMirrorRenderer;
 
 
 /***/ }),
-/* 202 */
+/* 203 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var FillRenderer_1 = __webpack_require__(63);
+var FillRenderer_1 = __webpack_require__(64);
 var TimeGridFillRenderer = /** @class */ (function (_super) {
     tslib_1.__extends(TimeGridFillRenderer, _super);
     function TimeGridFillRenderer(timeGrid) {
@@ -14365,7 +14436,7 @@ exports.default = TimeGridFillRenderer;
 
 
 /***/ }),
-/* 203 */
+/* 204 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* A rectangular panel that is absolutely positioned over other content
@@ -14383,7 +14454,7 @@ Options:
 */
 Object.defineProperty(exports, "__esModule", { value: true });
 var dom_manip_1 = __webpack_require__(3);
-var dom_event_1 = __webpack_require__(23);
+var dom_event_1 = __webpack_require__(24);
 var dom_geom_1 = __webpack_require__(15);
 var Popover = /** @class */ (function () {
     function Popover(options) {
@@ -14496,13 +14567,13 @@ exports.default = Popover;
 
 
 /***/ }),
-/* 204 */
+/* 205 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var dom_manip_1 = __webpack_require__(3);
-var DayGridEventRenderer_1 = __webpack_require__(164);
+var DayGridEventRenderer_1 = __webpack_require__(165);
 var DayGridMirrorRenderer = /** @class */ (function (_super) {
     tslib_1.__extends(DayGridMirrorRenderer, _super);
     function DayGridMirrorRenderer() {
@@ -14539,13 +14610,13 @@ exports.default = DayGridMirrorRenderer;
 
 
 /***/ }),
-/* 205 */
+/* 206 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var dom_manip_1 = __webpack_require__(3);
-var FillRenderer_1 = __webpack_require__(63);
+var FillRenderer_1 = __webpack_require__(64);
 var DayGridFillRenderer = /** @class */ (function (_super) {
     tslib_1.__extends(DayGridFillRenderer, _super);
     function DayGridFillRenderer(dayGrid) {
@@ -14598,12 +14669,16 @@ var DayGridFillRenderer = /** @class */ (function (_super) {
             '</div>');
         trEl = skeletonEl.getElementsByTagName('tr')[0];
         if (startCol > 0) {
-            trEl.appendChild(dom_manip_1.createElement('td', { colSpan: startCol }));
+            dom_manip_1.appendToElement(trEl, 
+            // will create (startCol + 1) td's
+            new Array(startCol + 1).join('<td></td>'));
         }
         seg.el.colSpan = endCol - startCol;
         trEl.appendChild(seg.el);
         if (endCol < colCnt) {
-            trEl.appendChild(dom_manip_1.createElement('td', { colSpan: colCnt - endCol }));
+            dom_manip_1.appendToElement(trEl, 
+            // will create (colCnt - endCol) td's
+            new Array(colCnt - endCol + 1).join('<td></td>'));
         }
         var introHtml = dayGrid.renderProps.renderIntroHtml();
         if (introHtml) {
@@ -14622,18 +14697,18 @@ exports.default = DayGridFillRenderer;
 
 
 /***/ }),
-/* 206 */
+/* 207 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var DateComponent_1 = __webpack_require__(22);
-var SimpleDayGridEventRenderer_1 = __webpack_require__(165);
+var SimpleDayGridEventRenderer_1 = __webpack_require__(166);
 var html_1 = __webpack_require__(11);
 var formatting_1 = __webpack_require__(7);
 var OffsetTracker_1 = __webpack_require__(51);
 var dom_geom_1 = __webpack_require__(15);
-var geom_1 = __webpack_require__(31);
+var geom_1 = __webpack_require__(32);
 var marker_1 = __webpack_require__(4);
 var dom_manip_1 = __webpack_require__(3);
 var memoized_rendering_1 = __webpack_require__(20);
@@ -14740,12 +14815,12 @@ exports.DayTileEventRenderer = DayTileEventRenderer;
 
 
 /***/ }),
-/* 207 */
+/* 208 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var event_splitting_1 = __webpack_require__(144);
+var event_splitting_1 = __webpack_require__(145);
 var event_rendering_1 = __webpack_require__(10);
 var AllDaySplitter = /** @class */ (function (_super) {
     tslib_1.__extends(AllDaySplitter, _super);
@@ -14783,7 +14858,7 @@ exports.default = AllDaySplitter;
 
 
 /***/ }),
-/* 208 */
+/* 209 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -14826,7 +14901,7 @@ exports.default = BasicViewDateProfileGenerator;
 
 
 /***/ }),
-/* 209 */
+/* 210 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -14920,13 +14995,13 @@ exports.default = ListEventRenderer;
 
 
 /***/ }),
-/* 210 */
+/* 211 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var FeaturefulElementDragging_1 = __webpack_require__(34);
-var ExternalElementDragging_1 = __webpack_require__(172);
-var options_1 = __webpack_require__(35);
+var FeaturefulElementDragging_1 = __webpack_require__(35);
+var ExternalElementDragging_1 = __webpack_require__(173);
+var options_1 = __webpack_require__(36);
 /*
 Makes an element (that is *external* to any calendar) draggable.
 Can pass in data that determines how an event will be created when dropped onto a calendar.
@@ -14977,7 +15052,7 @@ exports.default = ExternalDraggable;
 
 
 /***/ }),
-/* 211 */
+/* 212 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -15002,12 +15077,12 @@ exports.parseDragMeta = parseDragMeta;
 
 
 /***/ }),
-/* 212 */
+/* 213 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ExternalElementDragging_1 = __webpack_require__(172);
-var InferredElementDragging_1 = __webpack_require__(213);
+var ExternalElementDragging_1 = __webpack_require__(173);
+var InferredElementDragging_1 = __webpack_require__(214);
 /*
 Bridges third-party drag-n-drop systems with FullCalendar.
 Must be instantiated and destroyed by caller.
@@ -15046,13 +15121,13 @@ exports.default = ThirdPartyDraggable;
 
 
 /***/ }),
-/* 213 */
+/* 214 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
 var PointerDragging_1 = __webpack_require__(45);
-var ElementDragging_1 = __webpack_require__(61);
+var ElementDragging_1 = __webpack_require__(62);
 /*
 Detects when a *THIRD-PARTY* drag-n-drop system interacts with elements.
 The third-party system is responsible for drawing the visuals effects of the drag.
@@ -15122,15 +15197,15 @@ exports.default = InferredElementDragging;
 
 
 /***/ }),
-/* 214 */
+/* 215 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var env_1 = __webpack_require__(62);
+var env_1 = __webpack_require__(63);
 var formatting_1 = __webpack_require__(7);
 var locale_1 = __webpack_require__(47);
-var options_1 = __webpack_require__(35);
+var options_1 = __webpack_require__(36);
 function formatDate(dateInput, settings) {
     if (settings === void 0) { settings = {}; }
     var dateEnv = buildDateEnv(settings);
@@ -15169,13 +15244,6 @@ function buildDateEnv(settings) {
 
 
 /***/ }),
-/* 215 */
-/***/ (function(module, exports) {
-
-Object.defineProperty(exports, "__esModule", { value: true });
-
-
-/***/ }),
 /* 216 */
 /***/ (function(module, exports) {
 
@@ -15184,18 +15252,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 /***/ }),
 /* 217 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ThemeRegistry_1 = __webpack_require__(58);
-var StandardTheme_1 = __webpack_require__(147);
-var JqueryUiTheme_1 = __webpack_require__(148);
-var Bootstrap3Theme_1 = __webpack_require__(218);
-var Bootstrap4Theme_1 = __webpack_require__(219);
-ThemeRegistry_1.defineThemeSystem('standard', StandardTheme_1.default);
-ThemeRegistry_1.defineThemeSystem('jquery-ui', JqueryUiTheme_1.default);
-ThemeRegistry_1.defineThemeSystem('bootstrap3', Bootstrap3Theme_1.default);
-ThemeRegistry_1.defineThemeSystem('bootstrap4', Bootstrap4Theme_1.default);
 
 
 /***/ }),
@@ -15203,8 +15262,24 @@ ThemeRegistry_1.defineThemeSystem('bootstrap4', Bootstrap4Theme_1.default);
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var ThemeRegistry_1 = __webpack_require__(59);
+var StandardTheme_1 = __webpack_require__(148);
+var JqueryUiTheme_1 = __webpack_require__(149);
+var Bootstrap3Theme_1 = __webpack_require__(219);
+var Bootstrap4Theme_1 = __webpack_require__(220);
+ThemeRegistry_1.defineThemeSystem('standard', StandardTheme_1.default);
+ThemeRegistry_1.defineThemeSystem('jquery-ui', JqueryUiTheme_1.default);
+ThemeRegistry_1.defineThemeSystem('bootstrap3', Bootstrap3Theme_1.default);
+ThemeRegistry_1.defineThemeSystem('bootstrap4', Bootstrap4Theme_1.default);
+
+
+/***/ }),
+/* 219 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var Theme_1 = __webpack_require__(32);
+var Theme_1 = __webpack_require__(33);
 var Bootstrap3Theme = /** @class */ (function (_super) {
     tslib_1.__extends(Bootstrap3Theme, _super);
     function Bootstrap3Theme() {
@@ -15248,12 +15323,12 @@ Bootstrap3Theme.prototype.iconOverridePrefix = 'glyphicon-';
 
 
 /***/ }),
-/* 219 */
+/* 220 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var Theme_1 = __webpack_require__(32);
+var Theme_1 = __webpack_require__(33);
 var Bootstrap4Theme = /** @class */ (function (_super) {
     tslib_1.__extends(Bootstrap4Theme, _super);
     function Bootstrap4Theme() {
@@ -15297,11 +15372,11 @@ Bootstrap4Theme.prototype.iconOverridePrefix = 'fa-';
 
 
 /***/ }),
-/* 220 */
+/* 221 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var event_source_1 = __webpack_require__(28);
+var event_source_1 = __webpack_require__(29);
 event_source_1.registerEventSourceDef({
     ignoreRange: true,
     parseMeta: function (raw) {
@@ -15322,12 +15397,12 @@ event_source_1.registerEventSourceDef({
 
 
 /***/ }),
-/* 221 */
+/* 222 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var promise_1 = __webpack_require__(145);
-var event_source_1 = __webpack_require__(28);
+var promise_1 = __webpack_require__(146);
+var event_source_1 = __webpack_require__(29);
 event_source_1.registerEventSourceDef({
     parseMeta: function (raw) {
         if (typeof raw === 'function') { // short form
@@ -15356,12 +15431,12 @@ event_source_1.registerEventSourceDef({
 
 
 /***/ }),
-/* 222 */
+/* 223 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var request = __webpack_require__(69);
-var event_source_1 = __webpack_require__(28);
+var request = __webpack_require__(70);
+var event_source_1 = __webpack_require__(29);
 var tslib_1 = __webpack_require__(1);
 event_source_1.registerEventSourceDef({
     parseMeta: function (raw) {
@@ -15452,7 +15527,7 @@ function buildRequestParams(meta, range, calendar) {
 
 
 /***/ }),
-/* 223 */
+/* 224 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -15502,11 +15577,16 @@ recurring_event_1.registerRecurringType({
         return null;
     },
     expand: function (typeData, eventDef, framingRange, dateEnv) {
-        return expandRanges(typeData.daysOfWeek, typeData.startTime, { start: typeData.startRecur, end: typeData.endRecur }, framingRange, dateEnv);
+        var clippedFramingRange = date_range_1.intersectRanges(framingRange, { start: typeData.startRecur, end: typeData.endRecur });
+        if (clippedFramingRange) {
+            return expandRanges(typeData.daysOfWeek, typeData.startTime, clippedFramingRange, dateEnv);
+        }
+        else {
+            return [];
+        }
     }
 });
-function expandRanges(daysOfWeek, startTime, recurRange, framingRange, dateEnv) {
-    framingRange = date_range_1.intersectRanges(framingRange, recurRange);
+function expandRanges(daysOfWeek, startTime, framingRange, dateEnv) {
     var dowHash = daysOfWeek ? object_1.arrayToHash(daysOfWeek) : null;
     var dayMarker = marker_1.startOfDay(framingRange.start);
     var endMarker = framingRange.end;
@@ -15532,12 +15612,12 @@ function expandRanges(daysOfWeek, startTime, recurRange, framingRange, dateEnv) 
 
 
 /***/ }),
-/* 224 */
+/* 225 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var plugin_system_1 = __webpack_require__(36);
-var BasicView_1 = __webpack_require__(170);
+var plugin_system_1 = __webpack_require__(37);
+var BasicView_1 = __webpack_require__(171);
 var plugin = plugin_system_1.createPlugin({
     viewConfigs: {
         basic: BasicView_1.default,
@@ -15561,12 +15641,12 @@ exports.default = plugin; // done for .d.ts bug :(
 
 
 /***/ }),
-/* 225 */
+/* 226 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var plugin_system_1 = __webpack_require__(36);
-var AgendaView_1 = __webpack_require__(159);
+var plugin_system_1 = __webpack_require__(37);
+var AgendaView_1 = __webpack_require__(160);
 var plugin = plugin_system_1.createPlugin({
     viewConfigs: {
         agenda: {
@@ -15589,12 +15669,12 @@ exports.default = plugin; // done for .d.ts bug :(
 
 
 /***/ }),
-/* 226 */
+/* 227 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var plugin_system_1 = __webpack_require__(36);
-var ListView_1 = __webpack_require__(171);
+var plugin_system_1 = __webpack_require__(37);
+var ListView_1 = __webpack_require__(172);
 var plugin = plugin_system_1.createPlugin({
     viewConfigs: {
         list: {

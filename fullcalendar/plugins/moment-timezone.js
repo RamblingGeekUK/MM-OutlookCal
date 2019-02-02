@@ -1,5 +1,5 @@
 /*!
- * FullCalendar v4.0.0-alpha.3
+ * FullCalendar v4.0.0-alpha.4
  * Docs & License: https://fullcalendar.io/
  * (c) 2018 Adam Shaw
  */
@@ -12,7 +12,7 @@
 		factory(require("fullcalendar"), require("moment"), require("moment-timezone"));
 	else
 		factory(root["FullCalendar"], root["moment"], root["moment-timezone"]);
-})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_70__, __WEBPACK_EXTERNAL_MODULE_231__) {
+})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_71__, __WEBPACK_EXTERNAL_MODULE_232__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -75,7 +75,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 230);
+/******/ 	return __webpack_require__(__webpack_require__.s = 231);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -119,13 +119,13 @@ exports.__assign = Object.assign || function (t) {
 
 /***/ }),
 
-/***/ 230:
+/***/ 231:
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var moment = __webpack_require__(70);
-__webpack_require__(231);
+var moment = __webpack_require__(71);
+__webpack_require__(232);
 var fullcalendar_1 = __webpack_require__(0);
 var MomentNamedTimeZone = /** @class */ (function (_super) {
     tslib_1.__extends(MomentNamedTimeZone, _super);
@@ -146,17 +146,17 @@ fullcalendar_1.globalDefaults.timeZoneImpl = 'moment-timezone';
 
 /***/ }),
 
-/***/ 231:
+/***/ 232:
 /***/ (function(module, exports) {
 
-module.exports = __WEBPACK_EXTERNAL_MODULE_231__;
+module.exports = __WEBPACK_EXTERNAL_MODULE_232__;
 
 /***/ }),
 
-/***/ 70:
+/***/ 71:
 /***/ (function(module, exports) {
 
-module.exports = __WEBPACK_EXTERNAL_MODULE_70__;
+module.exports = __WEBPACK_EXTERNAL_MODULE_71__;
 
 /***/ })
 

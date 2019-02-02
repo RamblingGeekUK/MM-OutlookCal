@@ -1,5 +1,5 @@
 /*!
- * FullCalendar v4.0.0-alpha.3
+ * FullCalendar v4.0.0-alpha.4
  * Docs & License: https://fullcalendar.io/
  * (c) 2018 Adam Shaw
  */
@@ -12,7 +12,7 @@
 		factory(require("fullcalendar"), require("moment"));
 	else
 		factory(root["FullCalendar"], root["moment"]);
-})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_70__) {
+})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_71__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -75,7 +75,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 229);
+/******/ 	return __webpack_require__(__webpack_require__.s = 230);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -87,11 +87,11 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_0__;
 
 /***/ }),
 
-/***/ 229:
+/***/ 230:
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var moment = __webpack_require__(70);
+var moment = __webpack_require__(71);
 var fc = __webpack_require__(0);
 function toMoment(date, calendar) {
     if (!(calendar instanceof fc.Calendar)) {
@@ -184,10 +184,10 @@ function formatRange(cmd, formatStart, formatEnd, separator) {
 
 /***/ }),
 
-/***/ 70:
+/***/ 71:
 /***/ (function(module, exports) {
 
-module.exports = __WEBPACK_EXTERNAL_MODULE_70__;
+module.exports = __WEBPACK_EXTERNAL_MODULE_71__;
 
 /***/ })
 

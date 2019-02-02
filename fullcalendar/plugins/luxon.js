@@ -1,5 +1,5 @@
 /*!
- * FullCalendar v4.0.0-alpha.3
+ * FullCalendar v4.0.0-alpha.4
  * Docs & License: https://fullcalendar.io/
  * (c) 2018 Adam Shaw
  */
@@ -12,7 +12,7 @@
 		factory(require("fullcalendar"), require("luxon"));
 	else
 		factory(root["FullCalendar"], root["luxon"]);
-})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_233__) {
+})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_234__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -75,7 +75,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 232);
+/******/ 	return __webpack_require__(__webpack_require__.s = 233);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -119,12 +119,12 @@ exports.__assign = Object.assign || function (t) {
 
 /***/ }),
 
-/***/ 232:
+/***/ 233:
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var luxon_1 = __webpack_require__(233);
+var luxon_1 = __webpack_require__(234);
 var fc = __webpack_require__(0);
 function toDateTime(date, calendar) {
     if (!(calendar instanceof fc.Calendar)) {
@@ -239,10 +239,10 @@ function formatRange(cmd, formatStart, formatEnd, separator) {
 
 /***/ }),
 
-/***/ 233:
+/***/ 234:
 /***/ (function(module, exports) {
 
-module.exports = __WEBPACK_EXTERNAL_MODULE_233__;
+module.exports = __WEBPACK_EXTERNAL_MODULE_234__;
 
 /***/ })
 

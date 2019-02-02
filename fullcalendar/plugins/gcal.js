@@ -1,5 +1,5 @@
 /*!
- * FullCalendar v4.0.0-alpha.3
+ * FullCalendar v4.0.0-alpha.4
  * Docs & License: https://fullcalendar.io/
  * (c) 2018 Adam Shaw
  */
@@ -12,7 +12,7 @@
 		factory(require("fullcalendar"), require("superagent"));
 	else
 		factory(root["FullCalendar"], root["superagent"]);
-})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_69__) {
+})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_70__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -75,7 +75,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 228);
+/******/ 	return __webpack_require__(__webpack_require__.s = 229);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -119,12 +119,12 @@ exports.__assign = Object.assign || function (t) {
 
 /***/ }),
 
-/***/ 228:
+/***/ 229:
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = __webpack_require__(1);
-var request = __webpack_require__(69);
+var request = __webpack_require__(70);
 var fullcalendar_1 = __webpack_require__(0);
 // TODO: expose somehow
 var API_BASE = 'https://www.googleapis.com/calendar/v3/calendars';
@@ -219,6 +219,9 @@ function buildRequestParams(range, apiKey, extraParams, dateEnv) {
         endStr = fullcalendar_1.addDays(range.end, 1).toISOString();
     }
     params = tslib_1.__assign({}, (extraParams || {}), { key: apiKey, timeMin: startStr, timeMax: endStr, singleEvents: true, maxResults: 9999 });
+    if (dateEnv.timeZone !== 'local') {
+        params.timeZone = dateEnv.timeZone;
+    }
     return params;
 }
 function gcalItemsToRawEventDefs(items, gcalTimezone) {
@@ -254,10 +257,10 @@ function injectQsComponent(url, component) {
 
 /***/ }),
 
-/***/ 69:
+/***/ 70:
 /***/ (function(module, exports) {
 
-module.exports = __WEBPACK_EXTERNAL_MODULE_69__;
+module.exports = __WEBPACK_EXTERNAL_MODULE_70__;
 
 /***/ })
 
