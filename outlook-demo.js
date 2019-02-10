@@ -227,7 +227,8 @@ $(function () {
                 $('#calendar-status').text('Here are the 10 most recently created events on your calendar.');
                 
                 console.log(events);
-            
+               
+
                 var fullcalevents = events.map(outlookevent => ({
                     start: outlookevent.start.dateTime,
                     end: outlookevent.end.dateTime,
@@ -241,16 +242,26 @@ $(function () {
                     }
                 }));
 
-                console.log(fullcalevents);
+            
+                var calendarEl = document.getElementById('calendar');
+                var calendar;
                 
-                var calendarEl = document.getElementById('calendar');                
-                var calendar = new FullCalendar.Calendar(calendarEl, {events: fullcalevents});
+                calendar = new FullCalendar.Calendar(calendarEl, {
+                    themeSystem: "bootstrap3",
+                    firstDay: 1,
+                    events: fullcalevents
+                });
+                calendar.render();
+                
+                      
 
             }
-            calendar.render();
-            
-        });
-    };
+         
+         
+        } // get events,
+        
+        ) //;
+    } // functions;
 
     function getUserEvents(callback) {
         getAccessToken(function (accessToken) {

@@ -43,7 +43,8 @@ function initThemeChooser(settings) {
       }
     });
 
-    setTheme(themeSystem, selectedTheme);
+    //setTheme(themeSystem, selectedTheme);
+    setTheme("bootstrap3", "darkly");
   }
 
 
