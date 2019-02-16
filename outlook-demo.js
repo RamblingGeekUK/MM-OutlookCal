@@ -27,11 +27,7 @@ $(function () {
     });
 
     function render(hash) {
-
-     
-
         var action = hash.split('=')[0];
-
         // Hide everything
         $('.main-container .page').hide();
 
