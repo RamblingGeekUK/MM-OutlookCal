@@ -162,7 +162,7 @@ $(function () {
         if (isAuthed) {
             $('#username').text(sessionStorage.userDisplayName);
             $('#logged-in-welcome').show();
-            setActiveNav('#home-nav');
+            setActiveNav('#fullcalendar');
         } else {
             $('#connect-button').attr('href', buildAuthUrl());
             $('#signin-prompt').show();

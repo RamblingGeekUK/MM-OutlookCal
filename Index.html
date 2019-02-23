@@ -5,173 +5,55 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Outlook SPA Demo</title>
-    <link href="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.6/css/bootstrap-theme.min.css" rel="stylesheet">
-    <link href="style.css" rel="stylesheet" type="text/css" />
 
+    <!-- Bootstrap 4.3.1 core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    
     <script src="//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.2.3.min.js"></script>
-    <script src="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.6/bootstrap.min.js"></script>
     <script src="//kjur.github.io/jsrsasign/jsrsasign-latest-all-min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
     <script src="graph-js-sdk-web.js"></script>
-
-    <link href='/fullcalendar/fullcalendar.min.css' rel='stylesheet'>
+    <link href='fullcalendar/fullcalendar.min.css' rel='stylesheet'>
     
     <script src='https://cdn.jsdelivr.net/npm/rrule@2.5.5/dist/es5/rrule.js'></script>
-    <script src='/fullcalendar/fullcalendar.min.js'></script>
+    <script src='fullcalendar/fullcalendar.min.js'></script>
     <script src='fullcalendar/plugins/rrule.min.js'></script>
 
     
     <script src="outlook-demo.js" type="module"></script>
     
-    <link href='https://bootswatch.com/3/darkly/bootstrap.min.css' rel='stylesheet' />
+    <link href='https://bootswatch.com/4/darkly/bootstrap.min.css' rel='stylesheet' />
+ </head>
+ 
+ <body>
+     <!-- <nav class="navbar navbar-expand-lg navbar-light bg-light">
+         <a class="navbar-brand" href="#">MM-OutlookCal</a>
+         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+           <span class="navbar-toggler-icon"></span>
+         </button>
+       
+         <div class="collapse navbar-collapse" id="navbarSupportedContent">
+           <ul class="navbar-nav mr-auto">
+             <li class="nav-item active">
+                <li id='home-nav'><a href="#">Home</a></li>
+                <li id='inbox-nav'><a href="#inbox">Inbox</a></li>
+                <li id='calendar-nav'><a href="#spacalendar">Calendar</a></li>
+                <li id='fullcalendar-nav'><a href="#fullcalendar">Full Calendar</a></li>
+             </li>
+             
+            
+            
+           </ul>
+           <ul class="nav navbar-nav navbar-right authed-nav">
+            <li><a href="#signout">Sign out</a></li>
+        </ul>
+         </div>
+       </nav> -->
 
-</head>
-
-<body>
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
-                    aria-expanded="false" aria-controls="navbar">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="#">Outlook SPA Demo</a>
-            </div>
-            <div id="navbar" class="navbar-collapse collapse">
-                <ul class="nav navbar-nav authed-nav">
-                    <li id='home-nav'><a href="#">Home</a></li>
-                    <li id='inbox-nav'><a href="#inbox">Inbox</a></li>
-                    <li id='calendar-nav'><a href="#spacalendar">Calendar</a></li>
-                    <li id='fullcalendar-nav'><a href="#fullcalendar">Full Calendar</a></li>
-                </ul>
-                <ul class="nav navbar-nav navbar-right authed-nav">
-                    <li><a href="#signout">Sign out</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- <div id='top'>
-
-        <div class='left'>
-    
-          <div id='theme-system-selector' class='selector'>
-            Theme System:
-    
-            <select>
-              <option value='bootstrap4' selected>Bootstrap 4</option>
-              <option value='bootstrap3'>Bootstrap 3</option>
-              <option value='jquery-ui'>jQuery UI</option>
-              <option value='standard'>unthemed</option>
-            </select>
-          </div>
-    
-          <div data-theme-system="bootstrap4" class='selector' style='display:none'>
-            Theme Name:
-    
-            <select>
-              <option value='' selected>Default</option>
-              <option value='cerulean'>Cerulean</option>
-              <option value='cosmo'>Cosmo</option>
-              <option value='cyborg'>Cyborg</option>
-              <option value='darkly'>Darkly</option>
-              <option value='flatly'>Flatly</option>
-              <option value='journal'>Journal</option>
-              <option value='litera'>Litera</option>
-              <option value='lumen'>Lumen</option>
-              <option value='lux'>Lux</option>
-              <option value='materia'>Materia</option>
-              <option value='minty'>Minty</option>
-              <option value='pulse'>Pulse</option>
-              <option value='sandstone'>Sandstone</option>
-              <option value='simplex'>Simplex</option>
-              <option value='sketchy'>Sketchy</option>
-              <option value='slate'>Slate</option>
-              <option value='solar'>Solar</option>
-              <option value='spacelab'>Spacelab</option>
-              <option value='superhero'>Superhero</option>
-              <option value='united'>United</option>
-              <option value='yeti'>Yeti</option>
-            </select>
-          </div>
-    
-          <div data-theme-system="bootstrap3" class='selector' style='display:none'>
-            Theme Name:
-    
-            <select>
-              <option value='' selected>Default</option>
-              <option value='cosmo'>Cosmo</option>
-              <option value='cyborg'>Cyborg</option>
-              <option value='darkly'>Darkly</option>
-              <option value='flatly'>Flatly</option>
-              <option value='journal'>Journal</option>
-              <option value='lumen'>Lumen</option>
-              <option value='paper'>Paper</option>
-              <option value='readable'>Readable</option>
-              <option value='sandstone'>Sandstone</option>
-              <option value='simplex'>Simplex</option>
-              <option value='slate'>Slate</option>
-              <option value='solar'>Solar</option>
-              <option value='spacelab'>Spacelab</option>
-              <option value='superhero'>Superhero</option>
-              <option value='united'>United</option>
-              <option value='yeti'>Yeti</option>
-            </select>
-          </div>
-    
-          <div data-theme-system="jquery-ui" class='selector' style='display:none'>
-            Theme Name:
-    
-            <select>
-              <option value='black-tie'>Black Tie</option>
-              <option value='blitzer'>Blitzer</option>
-              <option value='cupertino' selected>Cupertino</option>
-              <option value='dark-hive'>Dark Hive</option>
-              <option value='dot-luv'>Dot Luv</option>
-              <option value='eggplant'>Eggplant</option>
-              <option value='excite-bike'>Excite Bike</option>
-              <option value='flick'>Flick</option>
-              <option value='hot-sneaks'>Hot Sneaks</option>
-              <option value='humanity'>Humanity</option>
-              <option value='le-frog'>Le Frog</option>
-              <option value='mint-choc'>Mint Choc</option>
-              <option value='overcast'>Overcast</option>
-              <option value='pepper-grinder'>Pepper Grinder</option>
-              <option value='redmond'>Redmond</option>
-              <option value='smoothness'>Smoothness</option>
-              <option value='south-street'>South Street</option>
-              <option value='start'>Start</option>
-              <option value='sunny'>Sunny</option>
-              <option value='swanky-purse'>Swanky Purse</option>
-              <option value='trontastic'>Trontastic</option>
-              <option value='ui-darkness'>UI Darkness</option>
-              <option value='ui-lightness'>UI Lightness</option>
-              <option value='vader'>Vader</option>
-            </select>
-          </div>
-    
-          <span id='loading' style='display:none'>loading theme...</span>
-    
-        </div>
-    
-        <div class='right'>
-          <span class='credits' data-credit-id='bootstrap-standard' style='display:none'>
-            <a href='https://getbootstrap.com/docs/3.3/' target='_blank'>Theme by Bootstrap</a>
-          </span>
-          <span class='credits' data-credit-id='bootstrap-custom' style='display:none'>
-            <a href='https://bootswatch.com/' target='_blank'>Theme by Bootswatch</a>
-          </span>
-          <span class='credits' data-credit-id='jquery-ui' style='display:none'>
-            <a href='http://jqueryui.com/themeroller/' target='_blank'>Theme by jQuery UI</a>
-          </span>
-        </div>
-    
-        <div class='clear'></div>
-      </div> -->
+  
 
 
     <div class="container main-container">
